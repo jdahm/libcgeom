@@ -1,6 +1,8 @@
 CPPC=g++
 CPPFLAGS=-Wall -Wextra -Werror -g -O2
 
+all: test
+
 %.o: %.cc
 	$(CPPC) $(CPPFLAGS) -MMD -c $< -o $@
 
