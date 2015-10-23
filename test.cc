@@ -8,5 +8,7 @@ int main()
 
   Subdivision S(a, b, c);
 
+  // S.InsertSite(Point2d(2.0, 2.0));
+
   return 0;
 }
