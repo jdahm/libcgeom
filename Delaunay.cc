@@ -45,7 +45,7 @@ int InCircle(const Point2d& a, const Point2d& b, const Point2d& c, const Point2d
   return (a.x*a.x + a.y*a.y) * TriArea(b, c, d) -
     (b.x*b.x + b.y*b.y) * TriArea(a, c, d) +
     (c.x*c.x + c.y*c.y) * TriArea(a, b, d) -
-    (d.x*d.x + d.y*d.y) * TriArea(a, b, c) > 0;
+    (d.x*d.x + d.y*d.y) * TriArea(a, b, c) > EPS;
 }
 
 int ccw(const Point2d& a, const Point2d& b, const Point2d& c)
