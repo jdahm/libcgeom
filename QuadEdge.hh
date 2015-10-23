@@ -76,7 +76,7 @@ public:
   inline const Point2d& Dest2d() const
   { return (num < 2) ? *((this + 2)->data) : *((this - 2)->data); }
 
-  inline void  EndPoints(Point2d* o, Point2d* d)
+  inline void EndPoints(Point2d* o, Point2d* d)
   {
     data = o;
     Sym()->data = d;

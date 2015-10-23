@@ -39,8 +39,7 @@ void Splice(Edge* a, Edge* b)
 
 void DeleteEdge(Edge* e)
 {
-Splice(e, e->Oprev());
-Splice(e->Sym(), e->Sym()->Oprev());
-delete e->Qedge();
+  Splice(e, e->Oprev());
+  Splice(e->Sym(), e->Sym()->Oprev());
+  delete e->Qedge();
 }
-
