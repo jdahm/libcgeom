@@ -22,8 +22,6 @@ private:
   // Operators to remove points and edges, updating pointList and qeList above
   void RemoveEdge(Edge*);
 
-  PointList::size_type containsPoint(const Point2d&);
-
   Edge *Locate(const Point2d&);
 
 public:
