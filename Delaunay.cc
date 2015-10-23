@@ -1,34 +1,6 @@
 #include "Delaunay.hh"
 #include "QuadEdge.hh"
 
-/************* Topological Operations for Delaunay Diagrams *****************/
-
-Edge* Connect(Edge* a, Edge* b)
-// Add a new edge e connecting the destination of a to the
-// origin of b, in such a way that all three have the same
-// left face after the connection is complete.
-// Additionally, the data pointers of the new edge are set.
-{
-  Edge* e = MakeEdge();
-  Splice(e, a->Lnext());
-  Splice(e->Sym(), b);
-  e->EndPoints(a->Dest(), b->Org());
-  return e;
-}
-
-void Swap(Edge* e)
-// Essentially turns edge e counterclockwise inside its enclosing
-// quadrilateral. The data pointers are modified accordingly.
-{
-  Edge* a = e->Oprev();
-  Edge* b = e->Sym()->Oprev();
-  Splice(e, a);
-  Splice(e->Sym(), b);
-  Splice(e, a->Lnext());
-  Splice(e->Sym(), b->Lnext());
-  e->EndPoints(a->Dest(), b->Dest());
-}
-
 /*************** Geometric Predicates for Delaunay Diagrams *****************/
 
 inline Real TriArea(const Point2d& a, const Point2d& b, const Point2d& c)

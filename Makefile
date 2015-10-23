@@ -1,5 +1,5 @@
 CPPC=g++
-CPPFLAGS=-Wall -Wextra -Werror -g -O2
+CPPFLAGS=-std=c++11 -Wall -Wextra -Werror -g -O2
 
 all: test
 

@@ -1,24 +1,58 @@
 #include "Subdivision.hh"
 #include "QuadEdge.hh"
 #include "Delaunay.hh"
-
+#include <algorithm>
 
 Subdivision::Subdivision(const Point2d& a, const Point2d& b, const Point2d& c)
 // Initialize a subdivision to the triangle defined by the points a, b, c.
 {
-  Point2d *da, *db, *dc;
-  da = new Point2d(a), db = new Point2d(b), dc = new Point2d(c);
-  Edge* ea = MakeEdge();
+  Point2d *da = AddPoint(a), *db = AddPoint(b), *dc = AddPoint(c);
+  Edge* ea = AddEdge();
   ea->EndPoints(da, db);
-  Edge* eb = MakeEdge();
+  Edge* eb = AddEdge();
   Splice(ea->Sym(), eb);
   eb->EndPoints(db, dc);
-  Edge* ec = MakeEdge();
+  Edge* ec = AddEdge();
   Splice(eb->Sym(), ec);
   ec->EndPoints(dc, da);
   Splice(ec->Sym(), ea);
   startingEdge = ea;
 }
+
+Subdivision::~Subdivision()
+{
+  for(Point2d* p : pointList)
+    delete p;
+
+  for(QuadEdge* qe : qeList)
+    delete qe;
+}
+
+Point2d* Subdivision::AddPoint(const Point2d& a)
+// Returns a pointer to the point at index in pointList
+{
+  Point2d* da = new Point2d(a);
+  pointList.push_back(da);
+  // return pointList.back();
+  return da;
+}
+
+Edge* Subdivision::AddEdge()
+{
+  Edge* eb = MakeEdge();
+  qeList.push_back(eb->Qedge());
+  // return eqList.back();
+  return eb;
+}
+
+void Subdivision::RemoveEdge(Edge* e)
+{
+  // This step is expensive: O(n)
+  QuadEdgeList::iterator qeIter = std::find(qeList.begin(), qeList.end(), e->Qedge());
+  DeleteEdge(e); // Deallocates the pointer
+  qeList.erase(qeIter); // Removes the element from the list
+}
+
 
 Edge* Subdivision::Locate(const Point2d& x)
 // Returns an edge e, s.t. either x is on e, or e is an edge of
@@ -41,6 +75,38 @@ Edge* Subdivision::Locate(const Point2d& x)
   }
 }
 
+
+/************* Topological Operations for Delaunay Diagrams *****************/
+
+Edge* Subdivision::Connect(Edge* a, Edge* b)
+// Add a new edge e connecting the destination of a to the
+// origin of b, in such a way that all three have the same
+// left face after the connection is complete.
+// Additionally, the data pointers of the new edge are set.
+{
+  Edge* e = AddEdge();
+  Splice(e, a->Lnext());
+  Splice(e->Sym(), b);
+  e->EndPoints(a->Dest(), b->Org());
+  return e;
+}
+
+void Subdivision::Swap(Edge* e)
+// Essentially turns edge e counterclockwise inside its enclosing
+// quadrilateral. The data pointers are modified accordingly.
+{
+  Edge* a = e->Oprev();
+  Edge* b = e->Sym()->Oprev();
+  Splice(e, a);
+  Splice(e->Sym(), b);
+  Splice(e, a->Lnext());
+  Splice(e->Sym(), b->Lnext());
+  e->EndPoints(a->Dest(), b->Dest());
+}
+
+
+/************* Iterative Delaunay Diagram *****************/
+
 void Subdivision::InsertSite(const Point2d& x)
 // Inserts a new point into a subdivision representing a Delaunay
 // triangulation, and fixes the affected edges so that the result
@@ -53,13 +119,14 @@ void Subdivision::InsertSite(const Point2d& x)
     return;
   else if (OnEdge(x, e)) {
     e = e->Oprev();
-    DeleteEdge(e->Onext());
+    RemoveEdge(e->Onext());
   }
   // Connect the new point to the vertices of the containing
   // triangle (or quadrilateral, if the new point fell on an
   // existing edge.)
-  Edge* base = MakeEdge();
-  base->EndPoints(e->Org(), new Point2d(x));
+  Edge* base = AddEdge();
+  Point2d *dx = AddPoint(x);
+  base->EndPoints(e->Org(), dx);
   Splice(base, e);
   startingEdge = base;
   do {
