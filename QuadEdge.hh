@@ -1,7 +1,7 @@
 #ifndef QUADEDGE_HH
 #define QUADEDGE_HH
 
-#include "Geom2D.hh"
+#include "Geom2d.hh"
 
 class QuadEdge;
 
@@ -82,7 +82,7 @@ public:
     Sym()->data = d;
   }
 
-  inline QuadEdge* Qedge() { return (QuadEdge *)(this - num); }
+  inline QuadEdge* Qedge() { return reinterpret_cast<QuadEdge*>(this - num); }
 };
 
 class QuadEdge {
@@ -100,7 +100,5 @@ Edge* MakeEdge();
 void Splice(Edge* a, Edge* b);
 
 void DeleteEdge(Edge* e);
-
-Edge* Connect(Edge* a, Edge* b);
 
 #endif

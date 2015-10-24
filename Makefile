@@ -6,7 +6,7 @@ all: test
 %.o: %.cc
 	$(CPPC) $(CPPFLAGS) -MMD -c $< -o $@
 
-SRC=QuadEdge.cc Delaunay.cc Subdivision.cc
+SRC=QuadEdge.cc Delaunay.cc
 
 -include $(SRC:.cc=.d)
 
@@ -15,4 +15,4 @@ test: test.cc $(SRC:.cc=.o)
 
 .PHONY: clean
 clean:
-	rm -f *.o
+	rm -f *.o *.d

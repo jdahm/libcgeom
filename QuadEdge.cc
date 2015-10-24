@@ -1,5 +1,4 @@
 #include "QuadEdge.hh"
-#include "Geom2D.hh"
 
 QuadEdge::QuadEdge()
 {
@@ -8,7 +7,9 @@ QuadEdge::QuadEdge()
   e[2].next = &(e[2]); e[3].next = &(e[1]);
 }
 
+
 /*********************** Basic Topological Operators ****************/
+
 Edge* MakeEdge()
 {
   QuadEdge *ql = new QuadEdge();
