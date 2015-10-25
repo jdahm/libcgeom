@@ -11,9 +11,8 @@ subdivisions of two-dimensional manifolds.
 
 ## Todo Items
 
-Remove TRUE and FALSE macros inside Geom2d.hh
-
-Rename Geom2D.hh to Geom2d.hh
+Compare memory efficiency vs. problem size to theoretical bound using
+valgrind.
 
 Calculate the memory efficiency of the Delaunay class (using
 quad-edge) vs a standard conforming finite element mesh
