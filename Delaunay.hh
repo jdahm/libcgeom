@@ -53,18 +53,18 @@ public:
   void Write(const std::string&);
 };
 
-/*************** Geometric Predicates for Delaunay Diagrams *****************/
+// /*************** Geometric Predicates for Delaunay Diagrams *****************/
 
-Real TriArea(const Point2d& a, const Point2d& b, const Point2d& c);
+// Real TriArea(const Point2d& a, const Point2d& b, const Point2d& c);
 
-int InCircle(const Point2d& a, const Point2d& b, const Point2d& c, const Point2d& d);
+// int InCircle(const Point2d& a, const Point2d& b, const Point2d& c, const Point2d& d);
 
-int ccw(const Point2d& a, const Point2d& b, const Point2d& c);
+// bool ccw(const Point2d& a, const Point2d& b, const Point2d& c);
 
-int RightOf(const Point2d& x, Edge* e);
+// bool RightOf(const Point2d& x, Edge* e);
 
-int LeftOf(const Point2d& x, Edge* e);
+// bool LeftOf(const Point2d& x, Edge* e);
 
-int OnEdge(const Point2d& x, Edge* e);
+// bool OnEdge(const Point2d& x, Edge* e);
 
 #endif
