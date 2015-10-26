@@ -12,5 +12,7 @@ int main()
 
   DT.Write("out.txt");
 
+  DT.WriteVtuFiles("out");
+  
   return 0;
 }
