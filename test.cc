@@ -3,6 +3,8 @@
 #include <fstream>
 #include <tuple>
 #include <iostream>
+#include <random>
+#include <cmath>
 
 typedef std::list<Point2d> PointList;
 typedef std::tuple<PointList::size_type, PointList::size_type> PointConnect;
@@ -42,14 +44,35 @@ void Read(const std::string& fileName, PointList& point, PointConnectList& conne
   fst.close();
 }
 
+std::list<Point2d> generate_random_points(unsigned long int n, unsigned int prec)
+{
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> dis(-prec, prec);
+  unsigned long int np = 0;
+  std::list<Point2d> point;
+
+  while (np < n) {
+    Real x = static_cast<Real>(dis(gen))/static_cast<Real>(prec),
+      y = static_cast<Real>(dis(gen))/static_cast<Real>(prec);
+    if (std::sqrt(x*x + y*y) < 1) {
+      point.push_back(Point2d(x, y));
+      np++;
+    }
+  }
+
+  return point;
+}
+
 
 int main()
 {
   PointList point;
   PointConnectList connect;
 
-  // Read the points
-  Read("out.txt", point, connect);
+  // // Read the points
+  // Read("test.txt", point, connect);
+  point = generate_random_points(1e3, 1e9);
 
   // Sort
   point.sort([](const Point2d& a, const Point2d& b)
