@@ -257,7 +257,7 @@ void Delaunay::InitDD(std::list<Point2d>& point, Edge* &el, Edge* &er)
     // Compute the lower tangent of L and R
     while (true) {
       if      (LeftOf (*rdi->Org(), ldi)) ldi = ldi->Lnext();
-      else if (RightOf(*ldi->Org(), rdi)) rdi = rdi->Lnext();
+      else if (RightOf(*ldi->Org(), rdi)) rdi = rdi->Lprev();
       else break;
     }
 
