@@ -41,7 +41,7 @@ private:
 
   void Init2(const Point2d&, const Point2d&, Edge*&, Edge*&);
   void Init3(const Point2d&, const Point2d&, const Point2d&, Edge*&, Edge*&);
-  void InitDD(std::list<Point2d>&, Edge*&, Edge*&);
+  void InitDC(std::list<Point2d>&, Edge*&, Edge*&);
 
 public:
   Delaunay(std::list<Point2d>&);

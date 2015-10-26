@@ -129,7 +129,7 @@ Delaunay::Delaunay(const Point2d& a, const Point2d& b, const Point2d& c)
 Delaunay::Delaunay(std::list<Point2d>& point)
 {
   Edge *el, *er;
-  InitDD(point, el, er);
+  InitDC(point, el, er);
   startingEdge = el;
 }
 
@@ -216,7 +216,7 @@ static inline bool Valid(Edge* e, Edge* basel)
 // Tests whether the edge e is above basel
 { return RightOf(*e->Dest(), basel); }
 
-void Delaunay::InitDD(std::list<Point2d>& point, Edge* &el, Edge* &er)
+void Delaunay::InitDC(std::list<Point2d>& point, Edge* &el, Edge* &er)
 // Creates a Delaunay triangulation from the points listed in 'point',
 // using the Divide and Conquer algorithm from Guibas
 // and Stolfi (1985) Fig. 23 p. 114.
@@ -239,8 +239,8 @@ void Delaunay::InitDD(std::list<Point2d>& point, Edge* &el, Edge* &er)
 
     // Compute Delaunay recusively until one of the conditions above is met
     Edge *ldo, *ldi, *rdi, *rdo;
-    InitDD(pointL, ldo, ldi);
-    InitDD(pointR, rdi, rdo);
+    InitDC(pointL, ldo, ldi);
+    InitDC(pointR, rdi, rdo);
 
     // Compute the lower tangent of L and R
     while (true) {
