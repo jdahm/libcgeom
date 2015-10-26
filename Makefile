@@ -6,7 +6,7 @@ all: test
 %.o: %.cc
 	$(CPPC) $(CPPFLAGS) -MMD -c $< -o $@
 
-SRC=Geom2d.cc QuadEdge.cc Delaunay.cc
+SRC=Geom2d.cc QuadEdge.cc Delaunay.cc Vtk.cc
 
 -include $(SRC:.cc=.d)
 

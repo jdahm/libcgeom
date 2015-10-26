@@ -58,6 +58,9 @@ public:
 
   // Implementation of Subdivision interface
   void Write(const std::string&);
+
+  // Paraview Friendly Implementation
+  void WriteVtuFiles(const std::string&);
 };
 
 

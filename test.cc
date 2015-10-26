@@ -94,5 +94,7 @@ int main()
 
   DT.Write("out2.txt");
 
+  DT.WriteVtuFiles("out");
+  
   return 0;
 }
