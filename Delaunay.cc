@@ -117,18 +117,6 @@ void Delaunay::Init3(const Point2d& a, const Point2d& b, const Point2d& c,
     el = ec->Sym();
     er = ec;
   }
-  // Original version
-  // Point2d *da = AddPoint(a), *db = AddPoint(b), *dc = AddPoint(c);
-  // Edge* ea = AddEdge();
-  // ea->EndPoints(da, db);
-  // Edge* eb = AddEdge();
-  // Splice(ea->Sym(), eb);
-  // eb->EndPoints(db, dc);
-  // Edge* ec = AddEdge();
-  // Splice(eb->Sym(), ec);
-  // ec->EndPoints(dc, da);
-  // Splice(ec->Sym(), ea);
-  // startingEdge = ea;
 }
 
 Delaunay::Delaunay(const Point2d& a, const Point2d& b, const Point2d& c)
@@ -299,12 +287,10 @@ void Delaunay::InitDD(std::list<Point2d>& point, Edge* &el, Edge* &er)
           (Valid(rcand, basel) && InCircle(*lcand->Dest(), *lcand->Org(),
                                            *rcand->Org(), *rcand->Dest()))) {
         // Add cross edge basel from rcand.Dest to basel.Dest
-        // Edge *fbasel = basel;
         basel = Connect(rcand, basel->Sym());
       }
       else {
         // Add cross edge basel from basel.Org to lcand.Dest
-        // Edge *fbasel = basel;
         basel = Connect(basel->Sym(), lcand->Sym());
       }
     } // Merge loop
