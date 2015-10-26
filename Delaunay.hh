@@ -5,16 +5,17 @@
 #include "QuadEdge.hh"
 #include "Subdivision.hh"
 #include <list>
+#include <tuple>
 
 class Delaunay : public Subdivision {
 private:
   // List types
-  typedef std::list<QuadEdge*> QuadEdgeList;
+  typedef std::list<QuadEdge*> QEdgeList;
   typedef std::list<Point2d*> PointList;
 
   // Data members
   // Global lists of primal points and edges
-  QuadEdgeList qeList;
+  QEdgeList qeList;
   PointList pointList;
   // Keep a pointer to an edge from QuadEdgeList from whick to begin walking
   Edge *startingEdge;
@@ -25,11 +26,11 @@ private:
 
   // Operators to locate a point or edge given a pointer
   // Output iterator
-  PointList::iterator    LocatePointIter(Point2d* p );
-  QuadEdgeList::iterator LocateEdgeIter (Edge *e    );
+  PointList::iterator LocatePointIter(Point2d* p );
+  QEdgeList::iterator LocateEdgeIter (Edge *e    );
   // Output index
-  PointList::size_type    LocatePointIndex(Point2d* p);
-  QuadEdgeList::size_type LocateEdgeIndex (Edge *e   );
+  PointList::size_type  LocatePointIndex(Point2d* p);
+  QEdgeList::size_type LocateEdgeIndex (Edge *e   );
 
   // Operators to remove points and edges, updating pointList and qeList above
   void RemoveEdge(Edge*);
@@ -38,8 +39,14 @@ private:
   // search based on direction while walking the subdivision
   Edge *Locate(const Point2d&) const;
 
+  void Init2(const Point2d&, const Point2d&, Edge*&, Edge*&);
+  void Init3(const Point2d&, const Point2d&, const Point2d&, Edge*&, Edge*&);
+  void InitDD(std::list<Point2d>&, Edge*&, Edge*&);
+
 public:
+  Delaunay(std::list<Point2d>&);
   Delaunay(const Point2d&, const Point2d&, const Point2d&);
+
   ~Delaunay();
 
   // Insert a new point and update Delaunay Diagram
@@ -53,18 +60,5 @@ public:
   void Write(const std::string&);
 };
 
-// /*************** Geometric Predicates for Delaunay Diagrams *****************/
-
-// Real TriArea(const Point2d& a, const Point2d& b, const Point2d& c);
-
-// int InCircle(const Point2d& a, const Point2d& b, const Point2d& c, const Point2d& d);
-
-// bool ccw(const Point2d& a, const Point2d& b, const Point2d& c);
-
-// bool RightOf(const Point2d& x, Edge* e);
-
-// bool LeftOf(const Point2d& x, Edge* e);
-
-// bool OnEdge(const Point2d& x, Edge* e);
 
 #endif
