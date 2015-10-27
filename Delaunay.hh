@@ -23,6 +23,9 @@ private:
   Point2d *AddPoint(const Point2d&);
   Edge *AddEdge();
 
+  // Operators to remove points and edges, updating pointList and qeList above
+  void RemoveEdge(Edge*);
+
   // Operators to locate a point or edge given a pointer
   // Output iterator
   PointList::iterator LocatePointIter(Point2d* p );
@@ -31,18 +34,17 @@ private:
   PointList::size_type  LocatePointIndex(Point2d* p);
   QEdgeList::size_type LocateEdgeIndex (Edge *e   );
 
-  // Operators to remove points and edges, updating pointList and qeList above
-  void RemoveEdge(Edge*);
-
   // Locate an edge based on coordinates. Attempts to do a smart
   // search based on direction while walking the subdivision
   Edge *Locate(const Point2d&) const;
 
+  // Initialize a triangulation (used by constructors)
   void Init2(const Point2d&, const Point2d&, Edge*&, Edge*&);
   void Init3(const Point2d&, const Point2d&, const Point2d&, Edge*&, Edge*&);
   void InitDC(std::list<Point2d>&, Edge*&, Edge*&);
 
 public:
+  // Constructors
   Delaunay(std::list<Point2d>&);
   Delaunay(const Point2d&, const Point2d&, const Point2d&);
 

@@ -158,6 +158,14 @@ Edge* Delaunay::AddEdge()
   return eb;
 }
 
+void Delaunay::RemoveEdge(Edge* e)
+// Remove an edge and deallocate the memory
+{
+  QEdgeList::iterator qeIter = LocateEdgeIter(e);
+  DeleteEdge(e); // Deallocates the pointer
+  qeList.erase(qeIter); // Removes the element from the list
+}
+
 Delaunay::PointList::iterator Delaunay::LocatePointIter(Point2d* p)
 // This step is relatively expensive: O(nEdge-1)
 {
@@ -182,15 +190,6 @@ Delaunay::QEdgeList::size_type Delaunay::LocateEdgeIndex(Edge *e)
   return std::distance(qeList.begin(), LocateEdgeIter(e));
 }
 
-void Delaunay::RemoveEdge(Edge* e)
-// Remove an edge and deallocate the memory
-{
-  QEdgeList::iterator qeIter = LocateEdgeIter(e);
-  DeleteEdge(e); // Deallocates the pointer
-  qeList.erase(qeIter); // Removes the element from the list
-}
-
-
 Edge* Delaunay::Locate(const Point2d& x) const
 // Returns an edge e, s.t. either x is on e, or e is an edge of
 // a triangle containing x. The search starts from startingEdge
@@ -211,6 +210,9 @@ Edge* Delaunay::Locate(const Point2d& x) const
       return e;
   }
 }
+
+
+/************* Divide and Conquer (DC) Delaunay Diagram *****************/
 
 static inline bool Valid(Edge* e, Edge* basel)
 // Tests whether the edge e is above basel
