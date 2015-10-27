@@ -10,7 +10,7 @@ typedef std::list<Point2d> PointList;
 typedef std::tuple<PointList::size_type, PointList::size_type> PointConnect;
 typedef std::list<PointConnect> PointConnectList;
 
-void Read(const std::string& fileName, PointList& point, PointConnectList& connect)
+void ReadTxt(const std::string& fileName, PointList& point, PointConnectList& connect)
 {
   // Open the file
   std::ifstream fst(fileName, std::ios::in);
@@ -44,7 +44,7 @@ void Read(const std::string& fileName, PointList& point, PointConnectList& conne
   fst.close();
 }
 
-std::list<Point2d> generate_random_points(unsigned long int n, unsigned int prec)
+std::list<Point2d> genRandomPoints(unsigned long int n, unsigned int prec)
 {
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -71,8 +71,7 @@ int main()
   PointConnectList connect;
 
   // // Read the points
-  // Read("test.txt", point, connect);
-  point = generate_random_points(1e3, 1e9);
+  point = genRandomPoints(1e3, 1e9);
 
   // Sort
   point.sort([](const Point2d& a, const Point2d& b)
