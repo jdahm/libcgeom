@@ -12,6 +12,12 @@
 #endif
 #endif // USE_PARALLEL
 
+#define UNUSED(expr) do { (void)(expr); } while (0)
+
+void initParallel(int*, char**[]);
+
+void finalizeParallel();
+
 unsigned int rank();
 
 unsigned int numProcs();

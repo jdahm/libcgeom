@@ -1,21 +1,21 @@
 include config.mk
 
-all: test_serial test_parallel
+all: DoDelaunay pDoDelaunay
 
 %.o: %.cc
 	$(CPPC) $(CFLAGS) -MMD -c $< -o $@
 
 Parallel.o: Parallel.cc
 	$(CPPC) $(CFLAGS) -DUSE_PARALLEL -MMD -c $< -o $@
+-include Parallel.d
 
 BASE_SRC=Geom2d.cc QuadEdge.cc Delaunay.cc Delaunay_IO.cc
+-include $(BASE_SRC:.cc=.d)
 
--include $(SRC:.cc=.d)
-
-test_serial: test.cc $(BASE_SRC:.cc=.o) Serial.o
+DoDelaunay: DoDelaunay.cc $(BASE_SRC:.cc=.o) Serial.o
 	$(CPPC) $(CFLAGS) $(LFLAGS) $^ -o $@
 
-test_parallel: test.cc $(BASE_SRC:.cc=.o) Parallel.o
+pDoDelaunay: DoDelaunay.cc $(BASE_SRC:.cc=.o) Parallel.o
 	$(MPICPPC) $(CFLAGS) $(LFLAGS) $^ -o $@
 
 .PHONY: clean

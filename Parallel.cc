@@ -1,5 +1,15 @@
 #include "Parallel.hh"
 
+void initParallel(int *pargc, char **pargv[])
+{
+  MPI_CALL(MPI_Init(pargc, pargv));
+}
+
+void finalizeParallel()
+{
+  MPI_CALL(MPI_Finalize());
+}
+
 unsigned int rank()
 {
   int rank;

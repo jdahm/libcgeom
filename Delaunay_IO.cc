@@ -32,15 +32,8 @@ void Delaunay::WriteTxt(const std::string& fileName)
 }
 
 void Delaunay::WriteVtu(const std::string& prefix)
-// Outputs the delaunay subdivision to pvtuFileName
-// Format:
-// nVerts nEdges
-// for i in [1,nVerts]:
-//   Vert_i->x Vert_i->y
-// for i in [1,nEdges]:
-//   Edge_i->Org Edge_i->Dest
+// Write .vtu and .pvtu in parallel
 {
-
   // write the .pvtu pvtuFile
   if(!rank()){
     std::string pvtuFileName = prefix;

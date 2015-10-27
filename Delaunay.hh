@@ -43,6 +43,10 @@ private:
   void Init3(const Point2d&, const Point2d&, const Point2d&, Edge*&, Edge*&);
   void InitDC(std::list<Point2d>&, Edge*&, Edge*&);
 
+  // Topological Operators for Delaunay Diagram
+  Edge* Connect(Edge*, Edge*);
+  void Swap(Edge*);
+
 public:
   // Constructors
   Delaunay(std::list<Point2d>&);
@@ -52,10 +56,6 @@ public:
 
   // Insert a new point and update Delaunay Diagram
   void InsertSite(const Point2d&);
-
-  // Topological Operators for Delaunay Diagram
-  Edge* Connect(Edge*, Edge*);
-  void Swap(Edge*);
 
   // Simple text file output
   void WriteTxt(const std::string&);
