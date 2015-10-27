@@ -5,7 +5,7 @@
 #include <cassert>
 #include <iomanip>
 
-void Delaunay::WriteTxt(const std::string& fileName)
+void Delaunay::writeTxt(const std::string& fileName)
 // Outputs the delaunay subdivision to fileName
 // Format:
 // nVerts nEdges
@@ -24,14 +24,14 @@ void Delaunay::WriteTxt(const std::string& fileName)
 
   for (QuadEdge* qe : qeList){
     Edge* e = reinterpret_cast<Edge*>(qe);
-    PointList::size_type oi = LocatePointIndex(e->Org()), di = LocatePointIndex(e->Dest());
+    PointList::size_type oi = locatePointIndex(e->Org()), di = locatePointIndex(e->Dest());
     fst << oi << " " << di << std::endl;
   }
 
   fst.close();
 }
 
-void Delaunay::WriteVtu(const std::string& prefix)
+void Delaunay::writeVtu(const std::string& prefix)
 // Write .vtu and .pvtu in parallel
 {
   // write the .pvtu pvtuFile
@@ -77,7 +77,7 @@ void Delaunay::WriteVtu(const std::string& prefix)
   buf << "<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n";
   for (QuadEdge* qe : qeList){
     Edge* e = reinterpret_cast<Edge*>(qe);
-    PointList::size_type oi = LocatePointIndex(e->Org()), di = LocatePointIndex(e->Dest());
+    PointList::size_type oi = locatePointIndex(e->Org()), di = locatePointIndex(e->Dest());
     buf << oi << " " << di << std::endl;
   }
   buf << "</DataArray>\n";

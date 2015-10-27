@@ -64,7 +64,7 @@ std::list<Point2d> genRandomPoints(unsigned long int n, unsigned int prec)
 }
 
 template<class Cont>
-void QueueTransfer(Cont& v, unsigned int rankDest)
+void queueTransfer(Cont& v, unsigned int rankDest)
 {
   // Nothing here, for now.
 }
@@ -116,15 +116,15 @@ int main(int argc, char *argv[])
       startit = std::next(point.begin(), i*(point.size()+1)/nProc);
       endit   = std::next(point.begin(), std::min((i+1)*(point.size()+1)/nProc, point.size()));
       outpoint.splice(outpoint.begin(), point, startit, endit);
-      QueueTransfer(outpoint, i);
+      queueTransfer(outpoint, i);
     }
   }
 
   // Delaunay (DC)
   Delaunay DT(point);
 
-  // DT.Write("out2.txt");
-  DT.WriteVtu("out");
+  // DT.writeTxt("out2.txt");
+  DT.writeVtu("out");
 
   finalizeParallel();
 

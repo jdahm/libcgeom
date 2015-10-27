@@ -20,32 +20,32 @@ private:
   Edge *startingEdge;
 
   // Operators to add points and edges updating pointList and qeList above
-  Point2d *AddPoint(const Point2d&);
-  Edge *AddEdge();
+  Point2d *addPoint(const Point2d&);
+  Edge *addEdge();
 
   // Operators to remove points and edges, updating pointList and qeList above
-  void RemoveEdge(Edge*);
+  void removeEdge(Edge*);
 
   // Operators to locate a point or edge given a pointer
   // Output iterator
-  PointList::iterator LocatePointIter(Point2d* p );
-  QEdgeList::iterator LocateEdgeIter (Edge *e    );
+  PointList::iterator locatePointIter(Point2d* p );
+  QEdgeList::iterator locateEdgeIter (Edge *e    );
   // Output index
-  PointList::size_type  LocatePointIndex(Point2d* p);
-  QEdgeList::size_type LocateEdgeIndex (Edge *e   );
+  PointList::size_type  locatePointIndex(Point2d* p);
+  QEdgeList::size_type locateEdgeIndex (Edge *e   );
 
   // Locate an edge based on coordinates. Attempts to do a smart
   // search based on direction while walking the subdivision
-  Edge *Locate(const Point2d&) const;
+  Edge *locate(const Point2d&) const;
 
   // Initialize a triangulation (used by constructors)
-  void Init2(const Point2d&, const Point2d&, Edge*&, Edge*&);
-  void Init3(const Point2d&, const Point2d&, const Point2d&, Edge*&, Edge*&);
-  void InitDC(std::list<Point2d>&, Edge*&, Edge*&);
+  void init2(const Point2d&, const Point2d&, Edge*&, Edge*&);
+  void init3(const Point2d&, const Point2d&, const Point2d&, Edge*&, Edge*&);
+  void initDC(std::list<Point2d>&, Edge*&, Edge*&);
 
   // Topological Operators for Delaunay Diagram
-  Edge* Connect(Edge*, Edge*);
-  void Swap(Edge*);
+  Edge* connect(Edge*, Edge*);
+  void swap(Edge*);
 
 public:
   // Constructors
@@ -55,13 +55,13 @@ public:
   ~Delaunay();
 
   // Insert a new point and update Delaunay Diagram
-  void InsertSite(const Point2d&);
+  void insertSite(const Point2d&);
 
   // Simple text file output
-  void WriteTxt(const std::string&);
+  void writeTxt(const std::string&);
 
   // Paraview friendly output
-  void WriteVtu(const std::string&);
+  void writeVtu(const std::string&);
 };
 
 
