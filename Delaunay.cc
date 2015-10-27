@@ -344,29 +344,3 @@ void Delaunay::InsertSite(const Point2d& x)
       e = e->Onext()->Lprev();
   } while (true);
 }
-
-void Delaunay::Write(const std::string& fileName)
-// Outputs the delaunay subdivision to fileName
-// Format:
-// nVerts nEdges
-// for i in [1,nVerts]:
-//   Vert_i->x Vert_i->y
-// for i in [1,nEdges]:
-//   Edge_i->Org Edge_i->Dest
-{
-  std::ofstream fst(fileName, std::ios::out);
-
-  fst << pointList.size() << " " << qeList.size() << std::endl;
-
-  for (Point2d* p : pointList)
-    fst << std::scientific << std::setprecision(16) << p->x << " "
-        << std::scientific << std::setprecision(16) << p->y << std::endl;
-
-  for (QuadEdge* qe : qeList){
-    Edge* e = reinterpret_cast<Edge*>(qe);
-    PointList::size_type oi = LocatePointIndex(e->Org()), di = LocatePointIndex(e->Dest());
-    fst << oi << " " << di << std::endl;
-  }
-
-  fst.close();
-}

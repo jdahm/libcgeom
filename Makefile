@@ -8,7 +8,7 @@ all: test_serial test_parallel
 Parallel.o: Parallel.cc
 	$(CPPC) $(CFLAGS) -DUSE_PARALLEL -MMD -c $< -o $@
 
-BASE_SRC=Geom2d.cc QuadEdge.cc Delaunay.cc Vtk.cc
+BASE_SRC=Geom2d.cc QuadEdge.cc Delaunay.cc Delaunay_IO.cc
 
 -include $(SRC:.cc=.d)
 

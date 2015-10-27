@@ -12,9 +12,9 @@
 #endif
 #endif // USE_PARALLEL
 
-int rank();
+unsigned int rank();
 
-int nProc();
+unsigned int numProcs();
 
 
 #endif

@@ -3,11 +3,10 @@
 
 #include "Geom2d.hh"
 #include "QuadEdge.hh"
-#include "Subdivision.hh"
 #include <list>
 #include <tuple>
 
-class Delaunay : public Subdivision {
+class Delaunay {
 private:
   // List types
   typedef std::list<QuadEdge*> QEdgeList;
@@ -56,11 +55,11 @@ public:
   Edge* Connect(Edge*, Edge*);
   void Swap(Edge*);
 
-  // Implementation of Subdivision interface
-  void Write(const std::string&);
+  // Simple text file output
+  void WriteTxt(const std::string&);
 
-  // Paraview Friendly Implementation
-  void WriteVtuFiles(const std::string&);
+  // Paraview friendly output
+  void WriteVtu(const std::string&);
 };
 
 

@@ -1,13 +1,13 @@
 #include "Parallel.hh"
 
-int rank()
+unsigned int rank()
 {
   int rank;
   MPI_CALL(MPI_Comm_rank(MPI_COMM_WORLD, &rank));
   return rank;
 }
 
-int nProc()
+unsigned int numProcs()
 {
   int p;
   MPI_CALL(MPI_Comm_size(MPI_COMM_WORLD, &p));

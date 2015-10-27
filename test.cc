@@ -77,24 +77,21 @@ int main()
   // Sort
   point.sort([](const Point2d& a, const Point2d& b)
              {
-               // WARNING: Floating point equivalence check here
-               // Not very safe, but seems to work for now
-               if (a.x == b.x) return (a.y < b.y);
+               // Maybe this is slightly safer...
+               if (std::abs(a.x - b.x) < RealEps) return (a.y < b.y);
                else return (a.x < b.x);
              });
 
-  // Delaunay (DD)
+  // Remove duplicates (has to be already sorted)
+  point.unique([](const Point2d& a, const Point2d& b)
+               { return ((std::abs(a.x - b.x) < RealEps) &&
+                         (std::abs(a.y - b.y) < RealEps)); });
+
+  // Delaunay (DC)
   Delaunay DT(point);
 
-  // Point2d a(0.0, 0.0), b(0.0, 10.0), c(10.0, 0.0);
-
-  // Delaunay DT(a, b, c);
-
-  // DT.InsertSite(Point2d(2.0, 2.0));
-
-  DT.Write("out2.txt");
-
-  DT.WriteVtuFiles("out");
+  // DT.Write("out2.txt");
+  DT.WriteVtu("out");
   
   return 0;
 }

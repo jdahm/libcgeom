@@ -1,5 +1,5 @@
 #include "Parallel.hh"
 
-int rank() { return 0; }
+unsigned int rank() { return 0; }
 
-int nProc() { return 1; }
+unsigned int numProcs() { return 1; }
