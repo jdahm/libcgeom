@@ -2,3 +2,6 @@
 *.d
 test
 *.pyc
+config.mk
+*DoDelaunay
+*_test

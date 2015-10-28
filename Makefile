@@ -1,23 +1,52 @@
+# Include configure output
 include config.mk
+CF = $(CPPFLAGS) $(CXXFLAGS)
 
-all: DoDelaunay pDoDelaunay
+progs =
+tests =
 
+# Default rule
 %.o: %.cc
-	$(CPPC) $(CFLAGS) -MMD -c $< -o $@
+	$(CXX) $(CF) -MMD -c $< -o $@
 
+# Base source files
+base_src=Geom2d.cc QuadEdge.cc Delaunay.cc Delaunay_IO.cc
+delaunay_src=$(base_src) DoDelaunay.cc
+-include $(delaunay_src:.cc=.d)
+
+# Delaunay prog
+progs += DoDelaunay
+DoDelaunay: $(delaunay_src:.cc=.o) Serial.o
+	$(CXX) $(LDFLAGS) $^ -o $@
+
+# Tests
+tests += QuadEdge_test
+QuadEdge_test: QuadEdge_test.o QuadEdge.o Geom2d.o
+	$(CXX) $(LDFLAGS) $^ -o $@
+
+ifdef MPICXX
+# Parallel source
 Parallel.o: Parallel.cc
-	$(CPPC) $(CFLAGS) -DUSE_PARALLEL -MMD -c $< -o $@
+	$(MPICXX) $(CF) -DUSE_PARALLEL -MMD -c $< -o $@
 -include Parallel.d
 
-BASE_SRC=Geom2d.cc QuadEdge.cc Delaunay.cc Delaunay_IO.cc
--include $(BASE_SRC:.cc=.d)
+# Parallel Delaunay prog
+progs += pDoDelaunay
+pDoDelaunay: $(delaunay_src:.cc=.o) Parallel.o
+	$(MPICXX) $(LDFLAGS) $^ -o $@
+endif
 
-DoDelaunay: DoDelaunay.cc $(BASE_SRC:.cc=.o) Serial.o
-	$(CPPC) $(CFLAGS) $(LFLAGS) $^ -o $@
+all: $(progs)
+.DEFAULT_GOAL=all
 
-pDoDelaunay: DoDelaunay.cc $(BASE_SRC:.cc=.o) Parallel.o
-	$(MPICPPC) $(CFLAGS) $(LFLAGS) $^ -o $@
+# check: Build and execute tests
+SHELL=/bin/bash
+.PHONY: check
+check: $(tests)
+	status=0; \
+	for t in $(tests); do ./$$t || let status += 1; done; exit $$status;
+
 
 .PHONY: clean
 clean:
-	rm -f *.o *.d
+	rm -f *.o *.d $(progs)

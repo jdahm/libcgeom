@@ -1,5 +1,10 @@
 # libcgeom
 
+<a href="https://scan.coverity.com/projects/jdahm-libcgeom">
+  <img alt="Coverity Scan Build Status"
+       src="https://scan.coverity.com/projects/6802/badge.svg"/>
+</a>
+
 These aren't the droids you seek. Contain your excitement.
 
 This library seeks to implement several computational geometry tasks

@@ -53,11 +53,10 @@ std::list<Point2d> genRandomPoints(unsigned long int n, unsigned int prec)
   std::uniform_int_distribution<> dis(-prec, prec);
   std::list<Point2d> point;
 
-  for (unsigned np = 0; np < n; np++) {
+  for (unsigned long int np = 0; np < n; np++) {
     Real x = static_cast<Real>(dis(gen))/static_cast<Real>(prec);
     Real y = static_cast<Real>(dis(gen))/static_cast<Real>(prec);
     point.push_back(Point2d(x, y));
-    np++;
   }
 
   return point;
@@ -91,10 +90,10 @@ int main(int argc, char *argv[])
     }
     else if (sw == "-n") {
       std::stringstream ss;
-      ss << argv[3];
+      ss << argv[2];
       unsigned long int n;
       ss >> n;
-      point = genRandomPoints(n, 1e9);
+      point = genRandomPoints(n, 1e8);
     }
 
     // Sort

@@ -1,0 +1,19 @@
+language: cpp
+
+compiler:
+  - gcc
+  - clang
+
+# before_install:
+#   - echo $LANG
+#   - echo $LC_ALL
+#   - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y openmpi-bin openmpi-dev; fi
+
+script: ./configure -noparallel && make && make check
+
+branches:
+  only:
+    - master
+
+notifications:
+  email: true
