@@ -17,6 +17,12 @@ addons:
       - openmpi-dev
       - openmpi-bin
 
+install:
+  # g++4.8.1
+  - [ "$CXX" = "g++" ] && export CXX="g++-5.0"
+  # clang 3.4
+  - [ "$CXX" = "clang++" ] && export CXX="clang++-3.6"
+
 script: ./configure -noparallel && make && make check
 
 branches:
