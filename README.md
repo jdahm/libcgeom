@@ -1,6 +1,7 @@
-# libcgeom
-
+[![License GPL 3][badge-license]](http://www.gnu.org/licenses/gpl-3.0.txt)
 [![Build Status](https://travis-ci.org/jdahm/libcgeom.svg?branch=master)](https://travis-ci.org/jdahm/libcgeom)
+
+# libcgeom
 
 These aren't the droids you seek. Contain your excitement.
 
