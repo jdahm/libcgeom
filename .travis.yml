@@ -1,33 +1,25 @@
-language: cpp
-
 sudo: false
+language: cpp
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['g++-5', 'openmpi-dev', 'openmpi-bin']
+      env: CXX=g++-5
 
-compiler:
-  - gcc
-  - clang
-
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-precise-3.6
-    packages:
-      - gcc-5
-      - clang-3.6
-      - openmpi-dev
-      - openmpi-bin
-
-install:
-  # g++4.8.1
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-5.0"; fi
-  # clang 3.4
-  - if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.6"; fi
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
+          packages: ['clang-3.6', 'openmpi-dev', 'openmpi-bin']
+      env: CXX=clang++-3.6
 
 script: ./configure -noparallel && make && make check
 
 branches:
   only:
     - master
-
-notifications:
-  email: true
