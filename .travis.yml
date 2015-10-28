@@ -16,10 +16,6 @@ matrix:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
           packages: ['clang-3.6', 'openmpi-dev', 'openmpi-bin']
 
-branches:
-  only:
-    - master
-
 install:
   # g++4.8.1
   - if [ "$CXX" = "g++" ]; then export CXX="g++-5"; fi
