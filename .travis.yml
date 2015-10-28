@@ -19,9 +19,9 @@ addons:
 
 install:
   # g++4.8.1
-  - [ "$CXX" = "g++" ] && export CXX="g++-5.0"
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-5.0"; fi
   # clang 3.4
-  - [ "$CXX" = "clang++" ] && export CXX="clang++-3.6"
+  - if [ "$CXX" = "clang++" ]; then export CXX="clang++-3.6"; fi
 
 script: ./configure -noparallel && make && make check
 
