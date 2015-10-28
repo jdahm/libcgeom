@@ -7,7 +7,7 @@ class QuadEdge;
 
 class Edge {
   friend QuadEdge;
-  friend void Splice(Edge*, Edge*);
+  friend void splice(Edge*, Edge*);
 private:
   int num;
   Edge *next;
@@ -76,7 +76,7 @@ public:
   inline const Point2d& Dest2d() const
   { return (num < 2) ? *((this + 2)->data) : *((this - 2)->data); }
 
-  inline void EndPoints(Point2d* o, Point2d* d)
+  inline void endPoints(Point2d* o, Point2d* d)
   {
     data = o;
     Sym()->data = d;
@@ -86,7 +86,7 @@ public:
 };
 
 class QuadEdge {
-  friend Edge* MakeEdge();
+  friend Edge* makeEdge();
 private:
   Edge e[4];
 public:
@@ -95,10 +95,10 @@ public:
 
 
 /*********************** Basic Topological Operators ****************/
-Edge* MakeEdge();
+Edge* makeEdge();
 
-void Splice(Edge* a, Edge* b);
+void splice(Edge* a, Edge* b);
 
-void DeleteEdge(Edge* e);
+void deleteEdge(Edge* e);
 
 #endif

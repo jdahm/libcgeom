@@ -15,7 +15,7 @@ static inline Real triArea(const Point2d& a, const Point2d& b, const Point2d& c)
 }
 
 static inline bool inCircle(const Point2d& a, const Point2d& b, const Point2d& c, const Point2d& d)
-// Returns TRUE if the point d is inside the circle defined by the
+// Returns true if the point d is inside the circle defined by the
 // points a, b, c. See Guibas and Stolfi (1985) p.107.
 {
   return (a.x*a.x + a.y*a.y) * triArea(b, c, d) -
@@ -25,7 +25,7 @@ static inline bool inCircle(const Point2d& a, const Point2d& b, const Point2d& c
 }
 
 static inline bool ccw(const Point2d& a, const Point2d& b, const Point2d& c)
-// Returns TRUE if the points a, b, c are in a counterclockwiseorder
+// Returns true if the points a, b, c are in a counterclockwiseorder
 {
   return (triArea(a, b, c) > 0);
 }
@@ -67,9 +67,9 @@ Edge* Delaunay::connect(Edge* a, Edge* b)
 // Additionally, the data pointers of the new edge are set.
 {
   Edge* e = addEdge();
-  Splice(e, a->Lnext());
-  Splice(e->Sym(), b);
-  e->EndPoints(a->Dest(), b->Org());
+  splice(e, a->Lnext());
+  splice(e->Sym(), b);
+  e->endPoints(a->Dest(), b->Org());
   return e;
 }
 
@@ -79,11 +79,11 @@ void Delaunay::swap(Edge* e)
 {
   Edge* a = e->Oprev();
   Edge* b = e->Sym()->Oprev();
-  Splice(e, a);
-  Splice(e->Sym(), b);
-  Splice(e, a->Lnext());
-  Splice(e->Sym(), b->Lnext());
-  e->EndPoints(a->Dest(), b->Dest());
+  splice(e, a);
+  splice(e->Sym(), b);
+  splice(e, a->Lnext());
+  splice(e->Sym(), b->Lnext());
+  e->endPoints(a->Dest(), b->Dest());
 }
 
 void Delaunay::init2(const Point2d& a, const Point2d& b,
@@ -92,7 +92,7 @@ void Delaunay::init2(const Point2d& a, const Point2d& b,
 {
   Point2d *da = addPoint(a), *db = addPoint(b);
   Edge* ea = addEdge();
-  ea->EndPoints(da, db);
+  ea->endPoints(da, db);
   startingEdge = ea;
   el = ea;
   er = ea->Sym();
@@ -106,9 +106,9 @@ void Delaunay::init3(const Point2d& a, const Point2d& b, const Point2d& c,
   // Assume a, b, and c are in sorted order
   // Create edges ea and eb connecting da to db and db to dc
   Edge *ea = addEdge(), *eb = addEdge();
-  Splice(ea->Sym(), eb);
-  ea->EndPoints(da, db);
-  eb->EndPoints(ea->Dest(), dc);
+  splice(ea->Sym(), eb);
+  ea->endPoints(da, db);
+  eb->endPoints(ea->Dest(), dc);
   // Now close the triangle
   Edge *ec = connect(eb, ea);
   el = ea;
@@ -153,7 +153,7 @@ Point2d* Delaunay::addPoint(const Point2d& a)
 Edge* Delaunay::addEdge()
 // Allocate an edge and add it to qeList
 {
-  Edge* eb = MakeEdge();
+  Edge* eb = makeEdge();
   qeList.push_back(eb->Qedge());
   return eb;
 }
@@ -162,7 +162,7 @@ void Delaunay::removeEdge(Edge* e)
 // Remove an edge and deallocate the memory
 {
   QEdgeList::iterator qeIter = locateEdgeIter(e);
-  DeleteEdge(e); // Deallocates the pointer
+  deleteEdge(e); // Deallocates the pointer
   qeList.erase(qeIter); // Removes the element from the list
 }
 
@@ -265,7 +265,7 @@ void Delaunay::initDC(std::list<Point2d>& point, Edge* &el, Edge* &er)
       if (valid(lcand, basel))
         while(inCircle(*basel->Dest(), *basel->Org(), *lcand->Dest(), *lcand->Onext()->Dest())) {
           Edge *t = lcand->Onext();
-          DeleteEdge(lcand);
+          deleteEdge(lcand);
           lcand = t;
         }
       // Symmetrically, locate the first R point to be hit, and delete
@@ -274,7 +274,7 @@ void Delaunay::initDC(std::list<Point2d>& point, Edge* &el, Edge* &er)
       if (valid(rcand, basel))
         while(inCircle(*basel->Dest(), *basel->Org(), *rcand->Dest(), *rcand->Oprev()->Dest())) {
           Edge *t = rcand->Oprev();
-          DeleteEdge(rcand);
+          deleteEdge(rcand);
           rcand = t;
         }
 
@@ -324,8 +324,8 @@ void Delaunay::insertSite(const Point2d& x)
   // existing edge.)
   Edge* base = addEdge();
   Point2d *dx = addPoint(x);
-  base->EndPoints(e->Org(), dx);
-  Splice(base, e);
+  base->endPoints(e->Org(), dx);
+  splice(base, e);
   startingEdge = base;
   do {
     base = connect(e, base->Sym());
