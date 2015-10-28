@@ -1,5 +1,5 @@
 [![License GPL 3][badge-license]](http://www.gnu.org/licenses/gpl-3.0.txt)
-[![Build Status](https://travis-ci.org/jdahm/libcgeom.svg?branch=master)](https://travis-ci.org/jdahm/libcgeom)
+[![Build Status][badge-ci]](https://travis-ci.org/jdahm/libcgeom)
 
 # libcgeom
 
@@ -20,3 +20,6 @@ valgrind.
 Calculate the memory efficiency of the Delaunay class (using
 quad-edge) vs a standard conforming finite element mesh
 representation.
+
+[badge-ci]:      https://travis-ci.org/jdahm/libcgeom.svg?branch=master
+[badge-license]: https://img.shields.io/badge/license-GPL_3-green.svg
