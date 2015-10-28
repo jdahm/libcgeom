@@ -16,6 +16,10 @@ matrix:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
           packages: ['clang-3.6', 'openmpi-dev', 'openmpi-bin']
 
+branches:
+  only:
+    - master
+
 install:
   # g++4.8.1
   - if [ "$CXX" = "g++" ]; then export CXX="g++-5"; fi
@@ -24,6 +28,18 @@ install:
 
 script: ./configure -noparallel && make && make check
 
-branches:
-  only:
-    - master
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "n5FOBseOH6m+v9xfUNKW5FIRsZF19ibMs2eg+qJkXOevDbo5dZ5vyGZpDhTzeu8AGcbMZAKMgd+u0HnxmzVfwtW2TvvZPvTIXxCF4F0E0pIHI+ZaVQYgKUzfKsdsau+vP7VVUnmBKgeuMXTxLD4s/nC0cb3ajcB3jhC1Kbl2Lbb0AJxyeP7xkOcVmC6unuYBVQQYtXheaGlmEsoERtsffvD62pZhLRai1f3klo+V4ScvYYPCvI/2Mjp+3hzHJ7pdNSUo718JjV1Ya1S6+4xcHlFR9b4N71j2bPgmnsma1Jfqg8EgNk6C1S59pAPQWC45L+fXMWdSyMhtTvgPMy/H5XvnCYTMWZ8+fqDWpeY3OY/19lLsjCQz/RvaGkjYfpxZwtHm5EMC4fPnS+KL0pEYZh1NcKED80a0w0iXP/WpPigaQPg6uA+HD1ix8Z8B20hyA/XaylaVfhS0nAIcemwtcH6sHEM92fRI+ADPAlm09bzX5zK77Y6F4fjuIL10Y0WJpc8KW80ZoIfkUixF0hajKo9ry0rSPxikn0NXHiuTZAaBWDsJHr34PQGASA4SqHYBobnBHpHO1W+QgAllTOJJ+XWXHgjH+QOH3fGlH0meUc5RRtRCrB8ywzYHj+idosAG0206to89mNvL6nHpID6Y0Yll6LLQo3cyTN0cVSi7u2U="
+
+addons:
+  coverity_scan:
+    project:
+      name: "jdahm/libcgeom"
+      description: "Another computational geometry library"
+    notification_email: jdahm@fastmail.com
+    build_command_prepend: "./configure -noparallel && make clean"
+    build_command:   "make -j4 && make test"
+    branch_pattern: coverity_scan

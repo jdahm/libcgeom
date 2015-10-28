@@ -1,9 +1,8 @@
 # libcgeom
 
-<a href="https://scan.coverity.com/projects/jdahm-libcgeom">
-  <img alt="Coverity Scan Build Status"
-       src="https://scan.coverity.com/projects/6802/badge.svg"/>
-</a>
+[![Build Status](https://travis-ci.org/jdahm/libcgeom.svg?branch=master)](https://travis-ci.org/jdahm/libcgeom)
+
+[![Coverity Scan](https://scan.coverity.com/projects/6802/badge.svg)](https://scan.coverity.com/projects/jdahm-libcgeom)
 
 These aren't the droids you seek. Contain your excitement.
 
