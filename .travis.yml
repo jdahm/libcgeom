@@ -24,18 +24,6 @@ install:
 
 script: ./configure -noparallel && make && make check
 
-env:
-  global:
-   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
-   - secure: "NrM7YJQ41CKdSoHbrT6xJMf1IKl8s5swcceBK5D/nv0oKhuu3fhwhJxkko+/Ib+Gz4MdVhox2U0uIKWSZdP4LLne5EvGKIqa0veNtpeCMEBeRo9EFkBMuYaop9xGG9HUQq15mI7zm4eJcPpPcKzhdQLbL5cN80JLsL6H4P74jLg/HvJdEO96G3L0ruZ3U2Rw0st/XBYT+72igeZwxL8T6eDsoS0dzsE/vEOYPGNODjqm/n+aGuPA8CoHCk8hbygMP8B7bhZEOzQA1TY+wHr0GQ34/vQMF+9ADd+q1oH7fszbNHimQ63u9EshMzFaxkxhVxXa1nVEdDJNxrqE6LAeKp75y5uILBZe0xN79lf+sdyyYhHmP/6IdnR5dL/3DioMMFw2VZyJ0MOZlSFkjg1kr2S6Z/Dc+iv4ZrESchV1jdP+S0gRn8NBOR7g4ulJoPY1p449hKmafBMOLOHZ3fPjQSHgXOCGjhdpoRy7bH/14LxITg2PLu74zcN7RAYXVB9fkcOVhDbsMmRXtiEzdWjG4ajl0uTap4aU9Diz+6gphsbnkO8NaWROC+ZunFKXHjzcENMaEZRuxWhd2gFBr5c6TnQYPFaO5n6yvVYhimBHDKyEuVdhRv6coIOEXW/v2F60aEriSFP7c/g8qqHgu+g4QH3vAPtZRykjyxPNMRQCIJ8="
-
-addons:
-  coverity_scan:
-    project:
-      name: "jdahm/libcgeom"
-      description: "Another computational geometry library"
-    notification_email: jdahm@fastmail.com
-    build_command_prepend: "./configure -noparallel && make clean"
-    build_command:   "make -j4 && make test"
-    branch_pattern: coverity_scan
+branches:
+  only:
+    - master

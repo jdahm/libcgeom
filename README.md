@@ -2,8 +2,6 @@
 
 [![Build Status](https://travis-ci.org/jdahm/libcgeom.svg?branch=master)](https://travis-ci.org/jdahm/libcgeom)
 
-[![Coverity Scan](https://scan.coverity.com/projects/6802/badge.svg)](https://scan.coverity.com/projects/jdahm-libcgeom)
-
 These aren't the droids you seek. Contain your excitement.
 
 This library seeks to implement several computational geometry tasks
