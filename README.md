@@ -14,12 +14,6 @@ subdivisions of two-dimensional manifolds.
 
 ## Todo Items
 
-Compare memory efficiency vs. problem size to theoretical bound using
-valgrind.
-
-Calculate the memory efficiency of the Delaunay class (using
-quad-edge) vs a standard conforming finite element mesh
-representation.
 
 [badge-ci]:      https://travis-ci.org/jdahm/libcgeom.svg?branch=master
 [badge-license]: https://img.shields.io/badge/license-GPL_3-green.svg
