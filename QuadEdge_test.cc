@@ -1,8 +1,7 @@
 #include "QuadEdge.hh"
 #include <iostream>
 
-int main()
-{
+int main() {
   Point2d *a = new Point2d(0.0, 0.0);
   Point2d *b = new Point2d(1.0, 0.0);
   Point2d *c = new Point2d(1.0, 1.0);
