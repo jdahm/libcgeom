@@ -52,6 +52,10 @@ check: $(tests)
 	status=0; \
 	for t in $(tests); do ./$$t || let status += 1; done; exit $$status;
 
+.PHONY: lint
+lint:
+	uncrustify -c uncrustify.cfg --no-backup $(shell find . -name "*.cc" -or -name "*.hh")
+
 
 .PHONY: clean
 clean:

@@ -7,61 +7,72 @@
 #include <tuple>
 
 class Delaunay {
-private:
-  // List types
-  typedef std::list<QuadEdge*> QEdgeList;
-  typedef std::list<Point2d*> PointList;
+        // List types
+        typedef std::list<QuadEdge*> QEdgeList;
+        typedef std::list<Point2d*> PointList;
 
-  // Data members
-  // Global lists of primal points and edges
-  QEdgeList qeList;
-  PointList pointList;
-  // Keep a pointer to an edge from QuadEdgeList from whick to begin walking
-  Edge *startingEdge;
+        // Data members
+        // Global lists of primal points and edges
+        QEdgeList qeList;
+        PointList pointList;
+        // Keep a pointer to an edge from QuadEdgeList from whick to begin walking
+        Edge      *startingEdge;
 
-  // Operators to add points and edges updating pointList and qeList above
-  Point2d *addPoint(const Point2d&);
-  Edge *addEdge();
+        // Operators to add points and edges updating pointList and qeList above
+        Point2d *add_point(const Point2d&);
 
-  // Operators to remove points and edges, updating pointList and qeList above
-  void removeEdge(Edge*);
+        Edge *add_edge();
 
-  // Operators to locate a point or edge given a pointer
-  // Output iterator
-  PointList::iterator locatePointIter(Point2d* p );
-  QEdgeList::iterator locateEdgeIter (Edge *e    );
-  // Output index
-  PointList::size_type  locatePointIndex(Point2d* p);
-  QEdgeList::size_type locateEdgeIndex (Edge *e   );
+        // Operators to remove points and edges, updating pointList and qeList above
+        void remove_edge(Edge*);
 
-  // Locate an edge based on coordinates. Attempts to do a smart
-  // search based on direction while walking the subdivision
-  Edge *locate(const Point2d&) const;
+        // Operators to locate a point or edge given a pointer
+        // Output iterator
+        PointList::iterator locate_point_iter(Point2d*);
 
-  // Initialize a triangulation (used by constructors)
-  void init2(const Point2d&, const Point2d&, Edge*&, Edge*&);
-  void init3(const Point2d&, const Point2d&, const Point2d&, Edge*&, Edge*&);
-  void initDC(std::list<Point2d>&, Edge*&, Edge*&);
+        QEdgeList::iterator locate_edge_iter (Edge*);
 
-  // Topological Operators for Delaunay Diagram
-  Edge* connect(Edge*, Edge*);
-  void swap(Edge*);
+        // Output index
+        PointList::size_type locate_point_index(Point2d*);
+
+        QEdgeList::size_type locate_edge_index (Edge*);
+
+        // Locate an edge based on coordinates. Attempts to do a smart
+        // search based on direction while walking the subdivision
+        Edge *locate(const Point2d&) const;
+
+        // Initialize a triangulation (used by constructors)
+        void init_2(const Point2d&, const Point2d&, Edge*&, Edge*&);
+
+        void init_3(const Point2d&,
+                    const Point2d&,
+                    const Point2d&,
+                    Edge*&,
+                    Edge*&);
+
+        void init_dc(std::list<Point2d>&, Edge*&, Edge*&);
+
+        // Topological Operators for Delaunay Diagram
+        Edge* connect(Edge*, Edge*);
+
+        void swap(Edge*);
 
 public:
-  // Constructors
-  Delaunay(std::list<Point2d>&);
-  Delaunay(const Point2d&, const Point2d&, const Point2d&);
+        // Constructors
+        Delaunay(std::list<Point2d>&);
+        Delaunay(const Point2d &, const Point2d &, const Point2d &);
 
-  ~Delaunay();
+        ~Delaunay();
 
-  // Insert a new point and update Delaunay Diagram
-  void insertSite(const Point2d&);
+        // Insert a new point and update Delaunay Diagram
+        void insert_point(const Point2d&);
 
-  // Simple text file output
-  void writeTxt(const std::string&);
+        // Simple text file output
+        void write_txt(const std::string&);
 
-  // Paraview friendly output
-  void writeVtu(const std::string&);
+        // Paraview friendly output
+        void write_vtu(const std::string&);
+
 };
 
 

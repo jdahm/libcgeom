@@ -6,99 +6,93 @@
 class QuadEdge;
 
 class Edge {
-  friend QuadEdge;
-  friend void splice(Edge*, Edge*);
+        friend QuadEdge;
+        friend void splice(Edge*, Edge*);
+
 private:
-  int num;
-  Edge *next;
-  Point2d *data;
+        int num;
+        Edge    *next;
+        Point2d *data;
 public:
-  Edge() { }
+        /************** Edge Algebra ****************/
 
-  /************** Edge Algebra ****************/
+        // Return the dual of the current edge, directed from its right to its left.
+        inline Edge* Rot() { return (num < 3) ? this + 1 : this - 3; }
 
-  inline Edge* Rot()
-  // Return the dual of the current edge, directed from its right to its left.
-  { return (num < 3) ? this + 1 : this - 3; }
+        // Return the dual of the current edge, directed from its left to its right.
+        inline Edge* invRot() { return (num > 0) ? this - 1 : this + 3; }
 
-  inline Edge* invRot()
-  // Return the dual of the current edge, directed from its left to its right.
-  { return (num > 0) ? this - 1 : this + 3; }
+        // Return the edge from the destination to the origin of the current edge.
+        inline Edge* Sym() { return (num < 2) ? this + 2 : this - 2; }
 
-  inline Edge* Sym()
-  // Return the edge from the destination to the origin of the current edge.
-  { return (num < 2) ? this + 2 : this - 2; }
+        // Return the next ccw edge around (from) the origin of the current edge.
+        inline Edge* Onext() { return next; }
 
-  inline Edge* Onext()
-  // Return the next ccw edge around (from) the origin of the current edge.
-  { return next; }
+        // Return the next cw edge around (from) the origin of the current edge.
+        inline Edge* Oprev() { return Rot()->Onext()->Rot(); }
 
-  inline Edge* Oprev()
-  // Return the next cw edge around (from) the origin of the current edge.
-  { return Rot()->Onext()->Rot(); }
+        // Return the next ccw edge around (into) the destination of the current edge.
+        inline Edge* Dnext() { return Sym()->Onext()->Sym(); }
 
-  inline Edge* Dnext()
-  // Return the next ccw edge around (into) the destination of the current edge.
-  { return Sym()->Onext()->Sym(); }
+        // Return the next cw edge around (into) the destination of the current edge.
+        inline Edge* Dprev() { return invRot()->Onext()->invRot(); }
 
-  inline Edge* Dprev()
-  // Return the next cw edge around (into) the destination of the current edge.
-  { return invRot()->Onext()->invRot(); }
+        // Return the ccw edge around the left face following the current edge.
+        inline Edge* Lnext() { return invRot()->Onext()->Rot(); }
 
-  inline Edge* Lnext()
-  // Return the ccw edge around the left face following the current edge.
-  { return invRot()->Onext()->Rot(); }
+        // Return the ccw edge around the left face before the current edge.
+        inline Edge* Lprev() { return Onext()->Sym(); }
 
-  inline Edge* Lprev()
-  // Return the ccw edge around the left face before the current edge.
-  { return Onext()->Sym(); }
+        // Return the edge around the right face ccw following the current edge.
+        inline Edge* Rnext() { return Rot()->Onext()->invRot(); }
 
-  inline Edge* Rnext()
-  // Return the edge around the right face ccw following the current edge.
-  { return Rot()->Onext()->invRot(); }
+        // Return the edge around the right face ccw before the current edge.
+        inline Edge* Rprev() { return Sym()->Onext(); }
 
-  inline Edge* Rprev()
-  // Return the edge around the right face ccw before the current edge.
-  { return Sym()->Onext(); }
 
-  /************** Access to data pointers ****************/
-  inline Point2d* Org()
-  // Origin
-  { return data; }
+        /************** Access to data pointers ****************/
+        // Origin
+        inline Point2d* Org() { return data; }
 
-  inline Point2d* Dest()
-  // Destination
-  { return Sym()->data; }
+        // Destination
+        inline Point2d* Dest() { return Sym()->data; }
 
-  inline const Point2d& Org2d() const
-  { return *data; }
+        inline const Point2d& Org2d() const { return *data; }
 
-  inline const Point2d& Dest2d() const
-  { return (num < 2) ? *((this + 2)->data) : *((this - 2)->data); }
+        inline const Point2d& Dest2d() const {
+                return (num < 2) ? *((this + 2)->data) : *((this - 2)->data);
+        }
 
-  inline void endPoints(Point2d* o, Point2d* d)
-  {
-    data = o;
-    Sym()->data = d;
-  }
 
-  inline QuadEdge* Qedge() { return reinterpret_cast<QuadEdge*>(this - num); }
+        inline void end_points(Point2d* o, Point2d* d) {
+                data = o; Sym()->data =
+                        d;
+        }
+
+
+        inline QuadEdge* Qedge() {
+                return reinterpret_cast<QuadEdge*>(this -
+                                                   num);
+        }
+
+
 };
 
 class QuadEdge {
-  friend Edge* makeEdge();
+        friend Edge* make_edge();
+
 private:
-  Edge e[4];
+        Edge e[4];
 public:
-  QuadEdge();
+        QuadEdge();
 };
 
 
 /*********************** Basic Topological Operators ****************/
-Edge* makeEdge();
+Edge* make_edge();
 
 void splice(Edge* a, Edge* b);
 
-void deleteEdge(Edge* e);
+void delete_edge(Edge* e);
 
 #endif

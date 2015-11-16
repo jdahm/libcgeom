@@ -1,7 +1,6 @@
 #include "Parallel.hh"
 
-void initParallel(int *pargc, char **pargv[])
-{ UNUSED(pargc); UNUSED(pargv); }
+void initParallel(int *pargc, char **pargv[]) { UNUSED(pargc); UNUSED(pargv); }
 
 void finalizeParallel() { }
 
