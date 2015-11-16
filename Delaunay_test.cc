@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <iterator>
+#include <cstdio>
 
 // Source: http://stackoverflow.com/questions/15118661/in-c-whats-the-fastest-way-to-tell-whether-two-string-or-binary-files-are-di
 template<typename InputIterator1, typename InputIterator2>
@@ -74,9 +75,16 @@ bool testTxt(const std::string &fileName) {
   // Delaunay (DC)
   Delaunay DT(point);
 
+  // Write a temporary file
   DT.writeTxt("._out.txt");
 
-  return compare_files("._out.txt", fileName);
+  // Compare it
+  bool equal = compare_files("._out.txt", fileName);
+
+  // Remove the temporary file
+  std::remove("._out.txt");
+
+  return equal;
 }
 
 int main() {
