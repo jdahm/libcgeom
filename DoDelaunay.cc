@@ -74,6 +74,8 @@ int main(int argc, char *argv[])
   unsigned int myRank, nProc;
   PointList point;
   PointConnectList connect;
+  const std::string usage("USAGE: DoDelaunay [-f | -n] arg [-t | -v] out");
+  std::string osw, out;
 
   initParallel(&argc, &argv);
 
@@ -81,25 +83,30 @@ int main(int argc, char *argv[])
   nProc = numProcs();
 
   if (myRank == 0) {
-    if (argc < 3) {
-      throw std::runtime_error("USAGE: DoDelaunay [-f | -n] arg");
+    int pos = 0;
+    if (argc == 0) throw std::runtime_error(usage);
+
+    pos++; const std::string isw(argv[pos]); pos++;
+
+    if (isw == "-f") {
+      readTxt(std::string(argv[pos]), point, connect);
     }
-    std::string sw(argv[1]);
-    if (sw == "-f") {
-      readTxt(std::string(argv[2]), point, connect);
-    }
-    else if (sw == "-n") {
+    else if (isw == "-n") {
       std::stringstream ss;
-      ss << argv[2];
+      ss << argv[pos];
       unsigned long int n;
       ss >> n;
       point = genRandomPoints(n, 1e8);
     }
 
+    pos++; osw = argv[pos];
+    pos++; out = argv[pos];
+    if (pos != argc - 1)
+      throw std::runtime_error("Command line parsing error. " + usage);
+
     // Sort
     point.sort([](const Point2d& a, const Point2d& b)
                {
-                 // Maybe this is slightly safer...
                  if (std::abs(a.x - b.x) < RealEps) return (a.y < b.y);
                  else return (a.x < b.x);
                });
@@ -122,8 +129,12 @@ int main(int argc, char *argv[])
   // Delaunay (DC)
   Delaunay DT(point);
 
-  // DT.writeTxt("out2.txt");
-  DT.writeVtu("out");
+  if (osw == "-t")
+    DT.writeTxt(out);
+  else if (osw == "-v")
+    DT.writeVtu("out");
+  else
+    throw std::runtime_error("Unknown output type");
 
   finalizeParallel();
 

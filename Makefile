@@ -23,6 +23,12 @@ DoDelaunay: $(delaunay_src:.cc=.o) Serial.o
 tests += QuadEdge_test
 QuadEdge_test: QuadEdge_test.o QuadEdge.o Geom2d.o
 	$(CXX) $(LDFLAGS) $^ -o $@
+-include QuadEdge_test.d
+
+tests += Delaunay_test
+Delaunay_test: Delaunay_test.o Delaunay.o Delaunay_IO.o Serial.o QuadEdge.o Geom2d.o
+	$(CXX) $(LDFLAGS) $^ -o $@
+-include Delaunay_test.d
 
 ifdef MPICXX
 # Parallel source
@@ -49,4 +55,4 @@ check: $(tests)
 
 .PHONY: clean
 clean:
-	rm -f *.o *.d $(progs)
+	rm -f *.o *.d $(progs) $(tests)
