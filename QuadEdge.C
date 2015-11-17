@@ -1,4 +1,4 @@
-#include "QuadEdge.hh"
+#include "QuadEdge.H"
 
 QuadEdge::QuadEdge() {
         e[0].num = 0, e[1].num = 1, e[2].num = 2, e[3].num = 3;

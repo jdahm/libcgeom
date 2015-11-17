@@ -6,17 +6,17 @@ progs =
 tests =
 
 # Default rule
-%.o: %.cc
+%.o: %.C
 	$(CXX) $(CF) -MMD -c $< -o $@
 
 # Base source files
-base_src=Geom2d.cc QuadEdge.cc Delaunay.cc Delaunay_IO.cc
-delaunay_src=$(base_src) DoDelaunay.cc
--include $(delaunay_src:.cc=.d)
+base_src=Geom2d.C QuadEdge.C Delaunay.C Delaunay_IO.C
+delaunay_src=$(base_src) DoDelaunay.C
+-include $(delaunay_src:.C=.d)
 
 # Delaunay prog
 progs += DoDelaunay
-DoDelaunay: $(delaunay_src:.cc=.o) Serial.o
+DoDelaunay: $(delaunay_src:.C=.o) Serial.o
 	$(CXX) $(LDFLAGS) $^ -o $@
 
 # Tests
@@ -32,13 +32,13 @@ Delaunay_test: Delaunay_test.o Delaunay.o Delaunay_IO.o Serial.o QuadEdge.o Geom
 
 ifdef MPICXX
 # Parallel source
-Parallel.o: Parallel.cc
+Parallel.o: Parallel.C
 	$(MPICXX) $(CF) -DUSE_PARALLEL -MMD -c $< -o $@
 -include Parallel.d
 
 # Parallel Delaunay prog
 progs += pDoDelaunay
-pDoDelaunay: $(delaunay_src:.cc=.o) Parallel.o
+pDoDelaunay: $(delaunay_src:.C=.o) Parallel.o
 	$(MPICXX) $(LDFLAGS) $^ -o $@
 endif
 
@@ -54,7 +54,7 @@ check: $(tests)
 
 .PHONY: lint
 lint:
-	uncrustify -c uncrustify.cfg --no-backup $(shell find . -name "*.cc" -or -name "*.hh")
+	uncrustify -c uncrustify.cfg --no-backup $(shell find . -name "*.C" -or -name "*.H")
 
 
 .PHONY: clean

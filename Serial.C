@@ -1,4 +1,4 @@
-#include "Parallel.hh"
+#include "Parallel.H"
 
 void initParallel(int *pargc, char **pargv[]) { UNUSED(pargc); UNUSED(pargv); }
 

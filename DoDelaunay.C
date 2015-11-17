@@ -1,6 +1,6 @@
-#include "Parallel.hh"
-#include "Geom2d.hh"
-#include "Delaunay.hh"
+#include "Parallel.H"
+#include "Geom2d.H"
+#include "Delaunay.H"
 #include <fstream>
 #include <tuple>
 #include <iostream>

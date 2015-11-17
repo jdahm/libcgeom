@@ -1,4 +1,4 @@
-#include "Geom2d.hh"
+#include "Geom2d.H"
 #include <iostream>
 #include <fstream>
 /******** Point2d *********/
@@ -25,9 +25,9 @@ Point2d operator* (Real c, const Point2d& v) {
 }
 
 
-static Real dot(const Point2d& u, const Point2d& v) {
-        return u.x * v.x + u.y * v.y;
-}
+// static Real dot(const Point2d& u, const Point2d& v) {
+//         return u.x * v.x + u.y * v.y;
+// }
 
 
 Point2d Point2d::operator+ (const Point2d& v) const {

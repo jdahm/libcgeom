@@ -1,5 +1,5 @@
-#include "Parallel.hh"
-#include "Delaunay.hh"
+#include "Parallel.H"
+#include "Delaunay.H"
 #include <sstream>
 #include <fstream>
 #include <cassert>

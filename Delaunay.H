@@ -1,8 +1,8 @@
 #ifndef DELAUNAY_HH
 #define DELAUNAY_HH
 
-#include "Geom2d.hh"
-#include "QuadEdge.hh"
+#include "Geom2d.H"
+#include "QuadEdge.H"
 #include <list>
 #include <tuple>
 

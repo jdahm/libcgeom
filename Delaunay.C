@@ -1,5 +1,5 @@
-#include "Delaunay.hh"
-#include "QuadEdge.hh"
+#include "Delaunay.H"
+#include "QuadEdge.H"
 #include <algorithm>
 #include <fstream>
 #include <iomanip>

@@ -1,4 +1,4 @@
-#include "QuadEdge.hh"
+#include "QuadEdge.H"
 #include <iostream>
 
 int main() {

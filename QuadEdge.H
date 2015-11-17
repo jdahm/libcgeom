@@ -1,7 +1,7 @@
 #ifndef QUADEDGE_HH
 #define QUADEDGE_HH
 
-#include "Geom2d.hh"
+#include "Geom2d.H"
 
 class QuadEdge;
 
