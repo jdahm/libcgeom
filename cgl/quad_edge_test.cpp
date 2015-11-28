@@ -1,31 +1,33 @@
-#include "QuadEdge.H"
 #include <iostream>
 
+#include "cgl/quad_edge.hpp"
+
 int main() {
-        Point2d *a = new Point2d(0.0, 0.0);
-        Point2d *b = new Point2d(1.0, 0.0);
-        Point2d *c = new Point2d(1.0, 1.0);
-        Point2d *d = new Point2d(0.0, 1.0);
+        using cgl::Point2d;
+        using cgl::Edge;
+        using cgl::make_edge;
 
-        Edge *ea = make_edge();
-        Edge *eb = make_edge();
-        Edge *ec = make_edge();
-        Edge *ed = make_edge();
-        Edge *ee = make_edge();
+        // Point2d *a = new Point2d(0.0, 0.0); // 0
+        // Point2d *b = new Point2d(1.0, 0.0); // 1
+        // Point2d *c = new Point2d(1.0, 1.0); // 2
+        // Point2d *d = new Point2d(0.0, 1.0); // 3
 
-        ea->end_points(a, b);
+        Edge *ea = make_edge(0, 1);
+        Edge *eb = make_edge(ea->Dest(), 2);
+        Edge *ec = make_edge(eb->Dest(), 3);
+        Edge *ed = make_edge(ec->Dest(), 0);
+        Edge *ee = make_edge(eb->Dest(), ea->Org());
+
         // Connect eb to ea->Dest()
-        splice(ea->Sym(), eb); eb->end_points(ea->Dest(), c);
+        splice(ea->Sym(), eb);
         // Connect ec to eb->Dest()
-        splice(eb->Sym(), ec); ec->end_points(eb->Dest(), d);
+        splice(eb->Sym(), ec);
         // Connect ed to ec->Sym() and ea
         splice(ec->Sym(), ed);
         splice(ed->Sym(), ea);
-        ed->end_points(ec->Dest(), a);
         // Connect ee to ec and ea -- this is equivalent to Delaunay::connect
         splice(ee, eb->Lnext());
         splice(ee->Sym(), ea);
-        ee->end_points(eb->Dest(), ea->Org());
 
         // Traverse the convex hull
         if (ea->Dnext() != eb->Sym()) {
@@ -57,7 +59,7 @@ int main() {
         }
 
         // Sym
-        if (ee->Sym()->Org() != a) {
+        if (ee->Sym()->Org() != 0) {
                 std::cerr << "Error: ee->Sym()->Org() != a" << std::endl;
                 return 1;
         }
@@ -111,22 +113,22 @@ int main() {
         }
 
         // Org / Dest
-        if (ed->Org()  != d) {
+        if (ed->Org() != 3) {
                 std::cerr << "Error: ed->Org() != d" << std::endl;
                 return 1;
         }
 
-        if (ed->Dest() != a) {
+        if (ed->Dest() != 0) {
                 std::cerr << "Error: ed->Dest() != a" << std::endl;
                 return 1;
         }
 
-        if (ee->Org()  != c) {
+        if (ee->Org()  != 2) {
                 std::cerr << "Error: ee->Org() != c" << std::endl;
                 return 1;
         }
 
-        if (ee->Dest()  != a) {
+        if (ee->Dest()  != 0) {
                 std::cerr << "Error: ee->Dest() != a" << std::endl;
                 return 1;
         }

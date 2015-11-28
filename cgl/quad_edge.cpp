@@ -1,4 +1,7 @@
-#include "QuadEdge.H"
+#include "cgl/quad_edge.hpp"
+
+namespace cgl
+{
 
 QuadEdge::QuadEdge() {
         e[0].num = 0, e[1].num = 1, e[2].num = 2, e[3].num = 3;
@@ -9,9 +12,16 @@ QuadEdge::QuadEdge() {
 
 /*********************** Basic Topological Operators ****************/
 
+// Factory function for edges
 Edge* make_edge() {
         QuadEdge *ql = new QuadEdge();
         return ql->e;
+}
+
+Edge* make_edge(Edge::id_type org, Edge::id_type dest) {
+        Edge *e = make_edge();
+        e->set_id(org, dest);
+        return e;
 }
 
 
@@ -45,3 +55,5 @@ void delete_edge(Edge* e) {
         splice(e->Sym(), e->Sym()->Oprev());
         delete e->Qedge();
 }
+
+} // namespace cgl

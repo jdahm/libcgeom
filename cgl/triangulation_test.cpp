@@ -1,5 +1,12 @@
-// #include "QuadEdge.H"
-#include "Delaunay.H"
+#include "cgl/point_set.hpp"
+#include "cgl/triangulation.hpp"
+#include <random>
+
+using cgl::real;
+using cgl::PointSet;
+using cgl::Point2d;
+using cgl::Delaunay;
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -33,14 +40,13 @@ bool compare_files(const std::string& filename1, const std::string& filename2) {
 }
 
 
-bool testTxt(const std::string &fileName) {
+bool test_txt(const std::string &fileName) {
         typedef std::list<Point2d> PointList;
         typedef std::tuple<PointList::size_type,
                            PointList::size_type> PointConnect;
         typedef std::list<PointConnect> PointConnectList;
 
-        // Point list
-        PointList point;
+        PointSet ps;
 
         // Open the file
         std::ifstream fst(fileName, std::ios::in);
@@ -53,28 +59,16 @@ bool testTxt(const std::string &fileName) {
 
         // Read in points
         for (PointList::size_type i = 0; i<nPoint; i++) {
-                Real x, y;
+                real x, y;
                 fst >> x;
                 fst >> y;
-                point.push_back(Point2d(x, y));
+                ps.add(Point2d(x, y));
         }
 
-        // Sort
-        point.sort([](const Point2d& a, const Point2d& b) {
-                           if (std::abs(a.x - b.x) < RealEps) return a.y < b.y;
-                           else return a.x < b.x;
-                   });
-
-        // Remove duplicates (has to be already sorted)
-        point.unique([](const Point2d& a, const Point2d& b)
-                     { return (std::abs(a.x - b.x) < RealEps) &&
-                       (std::abs(a.y - b.y) < RealEps);  });
-
-        // Delaunay (DC)
-        Delaunay DT(point);
+        Delaunay dt(ps);
 
         // Write a temporary file
-        DT.write_txt("._out.txt");
+        dt.write_txt("._out");
 
         // Compare it
         bool equal = compare_files("._out.txt", fileName);
@@ -87,10 +81,28 @@ bool testTxt(const std::string &fileName) {
 
 
 int main() {
-        if (!testTxt("test.txt")) {
+        if (!test_txt("test.txt")) {
                 std::cerr << "test.txt Delaunay test failed" << std::endl;
                 return 1;
         }
 
         return 0;
 }
+
+
+// typename PointSet::container_type
+// generate_random_points(unsigned long int n, unsigned int prec)
+// {
+//         std::random_device rd;
+//         std::mt19937 gen(rd());
+//         std::uniform_int_distribution<> dis(-prec, prec);
+//         typename PointSet::container_type point;
+
+//         for (unsigned long int np = 0; np < n; np++) {
+//                 real x = static_cast<real>(dis(gen)) / static_cast<real>(prec);
+//                 real y = static_cast<real>(dis(gen)) / static_cast<real>(prec);
+//                 point.push_back(Point2d(x, y));
+//         }
+
+//         return point;
+// }

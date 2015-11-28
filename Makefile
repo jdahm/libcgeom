@@ -1,62 +1,60 @@
-# Include configure output
 include config.mk
-CF = $(CPPFLAGS) $(CXXFLAGS)
+CF = $(CPPFLAGS) $(CXXFLAGS) -I.
 
 progs =
 tests =
 
 # Default rule
-%.o: %.C
-	$(CXX) $(CF) -MMD -c $< -o $@
+%.o: %.cpp
+	$(MPICXX) $(CF) -MMD -c $< -o $@
 
-# Base source files
-base_src=Geom2d.C QuadEdge.C Delaunay.C Delaunay_IO.C
-delaunay_src=$(base_src) DoDelaunay.C
--include $(delaunay_src:.C=.d)
+# Base source
+cgl_base=cgl/geom2d.o cgl/quad_edge.o cgl/point_set.o
+-include $(cgl_base:.o=.d)
 
-# Delaunay prog
-progs += DoDelaunay
-DoDelaunay: $(delaunay_src:.C=.o) Serial.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+par_base=par/communicator.o par/environment.o par/status.o
+-include $(par_base:.o=.d)
 
 # Tests
-tests += QuadEdge_test
-QuadEdge_test: QuadEdge_test.o QuadEdge.o Geom2d.o
-	$(CXX) $(LDFLAGS) $^ -o $@
--include QuadEdge_test.d
+tests += geom2d_test
+geom2d_test: cgl/geom2d_test.o cgl/geom2d.o
+	$(MPICXX) $^ -o $@ $(LDFLAGS)
+-include cgl/geom2d_test.d
 
-tests += Delaunay_test
-Delaunay_test: Delaunay_test.o Delaunay.o Delaunay_IO.o Serial.o QuadEdge.o Geom2d.o
-	$(CXX) $(LDFLAGS) $^ -o $@
--include Delaunay_test.d
+tests += quad_edge_test
+quad_edge_test: cgl/quad_edge_test.o cgl/quad_edge.o cgl/geom2d.o
+	$(MPICXX) $^ -o $@ $(LDFLAGS)
+-include cgl/quad_edge_test.d
 
-ifdef MPICXX
-# Parallel source
-Parallel.o: Parallel.C
-	$(MPICXX) $(CF) -DUSE_PARALLEL -MMD -c $< -o $@
--include Parallel.d
+tests += point_set_test
+point_set_test: cgl/point_set_test.o cgl/point_set.o cgl/geom2d.o $(par_base)
+	$(MPICXX) $^ -o $@ $(LDFLAGS)
+-include cgl/point_set_test.d
 
-# Parallel Delaunay prog
-progs += pDoDelaunay
-pDoDelaunay: $(delaunay_src:.C=.o) Parallel.o
-	$(MPICXX) $(LDFLAGS) $^ -o $@
-endif
+tests += subdivision_test
+subdivision_test: cgl/subdivision_test.o cgl/subdivision.o cgl/geom2d.o cgl/quad_edge.o $(par_base)
+	$(MPICXX) $^ -o $@ $(LDFLAGS)
+-include cgl/subdivision_test.d
 
-all: $(progs)
-.DEFAULT_GOAL=all
+tests += triangulation_test
+triangulation_test: cgl/triangulation_test.o cgl/triangulation.o cgl/subdivision.o cgl/point_set.o cgl/geom2d.o cgl/quad_edge.o $(par_base)
+	$(MPICXX) $^ -o $@ $(LDFLAGS)
+-include cgl/triangulation_test.d
+
+
+test: $(tests)
 
 # check: Build and execute tests
 SHELL=/bin/bash
 .PHONY: check
-check: $(tests)
+check: test
 	status=0; \
 	for t in $(tests); do ./$$t || let status += 1; done; exit $$status;
 
-.PHONY: lint
-lint:
-	uncrustify -c uncrustify.cfg --no-backup $(shell find . -name "*.C" -or -name "*.H")
-
-
 .PHONY: clean
 clean:
-	rm -f *.o *.d $(progs) $(tests)
+	rm -f cgl/*.o cgl/*.d test/* $(progs) $(tests) *.pyc
+
+all: $(progs)
+.DEFAULT_GOAL=all
+

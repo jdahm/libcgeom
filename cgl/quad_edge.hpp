@@ -1,19 +1,17 @@
-#ifndef QUADEDGE_HH
-#define QUADEDGE_HH
+#ifndef CGL_QUAD_EDGE_HH
+#define CGL_QUAD_EDGE_HH
 
-#include "Geom2d.H"
+#include "cgl/geom2d.hpp"
+
+namespace cgl
+{
 
 class QuadEdge;
 
 class Edge {
-        friend QuadEdge;
-        friend void splice(Edge*, Edge*);
-
-private:
-        int num;
-        Edge    *next;
-        Point2d *data;
 public:
+        typedef long int id_type;
+
         /************** Edge Algebra ****************/
 
         // Return the dual of the current edge, directed from its right to its left.
@@ -51,48 +49,50 @@ public:
 
 
         /************** Access to data pointers ****************/
-        // Origin
-        inline Point2d* Org() { return data; }
+        inline id_type Org() { return id; }
 
-        // Destination
-        inline Point2d* Dest() { return Sym()->data; }
+        inline id_type Dest() { return Sym()->id; }
 
-        inline const Point2d& Org2d() const { return *data; }
-
-        inline const Point2d& Dest2d() const {
-                return (num < 2) ? *((this + 2)->data) : *((this - 2)->data);
+        inline const QuadEdge* Qedge() const {
+                return reinterpret_cast<const QuadEdge*>(this - num);
         }
 
-
-        inline void end_points(Point2d* o, Point2d* d) {
-                data = o; Sym()->data =
-                        d;
+        inline void set_id(id_type o, id_type d) {
+                id = o;
+                Sym()->id = d;
         }
 
+private:
+        friend QuadEdge;
+        friend void splice(Edge*, Edge*);
+        friend Edge* make_edge(id_type, id_type);
 
-        inline QuadEdge* Qedge() {
-                return reinterpret_cast<QuadEdge*>(this -
-                                                   num);
-        }
-
-
+        unsigned int num;
+        Edge* next;
+        id_type id;
 };
 
 class QuadEdge {
-        friend Edge* make_edge();
-
-private:
-        Edge e[4];
 public:
         QuadEdge();
+private:
+        static constexpr unsigned int quad = 4;
+
+        friend Edge* make_edge();
+        friend Edge* make_edge(Edge::id_type, Edge::id_type);
+
+        Edge e[quad];
 };
 
 
 /*********************** Basic Topological Operators ****************/
 Edge* make_edge();
+Edge* make_edge(Edge::id_type, Edge::id_type);
 
 void splice(Edge* a, Edge* b);
 
 void delete_edge(Edge* e);
+
+} // namespace cgl
 
 #endif
