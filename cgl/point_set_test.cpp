@@ -70,7 +70,7 @@ int main()
                 return 1;
         }
 
-        ps.partition_1d(1);
+        ps.partition_1d(0);
         // write_csv(ps, "point_out");
 
         // TODO: Add a real test

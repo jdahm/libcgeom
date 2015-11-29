@@ -397,10 +397,10 @@ void PointSet::partition_1d(unsigned int dimension)
         if (sorted_dimension != static_cast<int>(dimension)) sort(dimension);
 
         const unsigned int  num_bins = num_procs * 10;
-        const std::array<real, 2> my_extents = {front()[0], back()[0]};
+        const std::array<real, 2> my_extents = {front()[dimension], back()[dimension]};
         std::array<real, 2> extents;
 
-        // Find the min and max bounds over all procs
+        // Find the min and max bounds over all procs (allreduce)
         comm_world.allreduce(&my_extents[0], &extents[0], par::min());
         comm_world.allreduce(&my_extents[1], &extents[1], par::max());
 
@@ -410,24 +410,28 @@ void PointSet::partition_1d(unsigned int dimension)
         {
                 id_container::size_type bin = 0;
                 for (const point_type &p : point) {
-                        while (p[0] > extents[0] + length / num_bins * static_cast<real>(bin+1))
+                        while (p[dimension] > extents[0] + length / num_bins * (bin+1))
                                 bin++;
                         my_pointbin[bin]++;
                 }
         }
 
+        // Sum histograms (allreduce bin data)
         id_container pointbin(num_bins, 0);
         comm_world.allreduce(my_pointbin.data(), pointbin.data(), par::sum(), num_bins);
 
-        const real glob_np = static_cast<real>(std::accumulate(pointbin.begin(), pointbin.end(), 0));
-        const typename point_type::size_type target_avg = std::floor(glob_np/num_procs);
+        // Calculate bounds of processors
+        const unsigned int glob_np =
+                std::accumulate(pointbin.begin(), pointbin.end(), 0);
+
+        const int target_avg = static_cast<real>(glob_np) / num_procs;
 
         std::vector<real> bound(num_procs, 0);
         for (id_container::size_type np=0, j=0, i=0; i<bound.size()-1; i++) {
                 // Loop until adding the next bin would bring us further from
                 // the target number of points
-                while (std::abs(static_cast<int>(np) - static_cast<int>(target_avg)) >=
-                       std::abs(static_cast<int>(np + pointbin[j]) - static_cast<int>(target_avg))) {
+                while (std::abs(static_cast<int>(np) - target_avg) >=
+                       std::abs(static_cast<int>(np + pointbin[j]) - target_avg)) {
                         np += pointbin[j];
                         j++;
                 }
@@ -438,106 +442,59 @@ void PointSet::partition_1d(unsigned int dimension)
         }
         bound.back() = extents[1];
 
-        // for (auto &b : bound) std::cout << b << " ";
-        // std::cout << std::endl;
-        for (auto &b : point) std::cout << b << " ";
-        std::cout << std::endl;
+        // Split points into vector of lists (uses efficient move here)
+        std::vector< std::list<point_type> > new_points =
+                split_multi(point, bound,
+                            [&](const point_type& p, real b) {
+                                    return b < p[dimension];
+                            });
 
-        std::vector< std::list<point_type> > new_points = split_multi(point, bound, [](const point_type& p, real b) {
-                        return b < p[0];
-               });
-        std::cout << "-----------" << std::endl;
-        for (auto& b: new_points) {
-                for (auto& c: b) std::cout << c << " ";
-                std::cout << std::endl;
-        }
-        std::cout << "-----------" << std::endl;
-
-        // create a vector for recvcounts (after allgather)
+        // Create a vector for sendcounts and recvcounts
         std::vector<int> sendcounts(num_procs, 0);
         for (id_container::size_type i=0; i<sendcounts.size(); i++)
                 sendcounts[i] = dim() * new_points[i].size();
-        std::cout << "rank = " << my_rank << std::endl;
 
         std::vector<int> recvcounts(num_procs, 0);
-        // NOTE: Overlappting the send and recv buffers. This might work...
+
+        // Perform alltoall for recvcounts from sendcounts
         comm_world.alltoall(sendcounts.data(), 1, recvcounts.data(), 1);
 
-        std::cout << "sendcounts:" << std::endl;
-        for (auto &b : sendcounts) std::cout << b << " ";
-        std::cout << std::endl;
-
+        // Offsets in memory (for alltoallv)
         std::vector<int> sdispls(num_procs, 0);
         for (id_container::size_type i=1; i<sdispls.size(); i++)
                 sdispls[i] = sdispls[i-1] + sendcounts[i-1];
-        std::cout << "sdispls:" << std::endl;
-        for (auto &b : sdispls) std::cout << b << " ";
-        std::cout << std::endl;
 
         std::vector<int> rdispls(num_procs, 0);
         for (id_container::size_type i=1; i<rdispls.size(); i++)
                 rdispls[i] = rdispls[i-1] + recvcounts[i-1];
-        std::cout << "rdispls:" << std::endl;
-        for (auto &b : rdispls) std::cout << b << " ";
-        std::cout << std::endl;
-
-        std::cout << "recvcounts:" << std::endl;
-        for (auto &b : recvcounts) std::cout << b << " ";
-        std::cout << std::endl;
 
         // Load into a contiguous buffer
-        std::vector<real> send_points;
-        for (std::list<point_type>& pp : new_points)
-                for (const point_type& p : pp) {
-                        send_points.push_back(p[0]);
-                        send_points.push_back(p[1]);
-                }
-        // send_points.insert(send_points.end(), p.begin(), p.end());
-        // for (id_container::size_type i=0; i<new_points.size(); i++)
-        // // Skip my_rank
-        // for (id_container::size_type i=my_rank+1; i<num_procs; i++)
-        //         my_points.insert(my_points.end(), new_points[i].begin(), new_points[i].end());
+        const int total_send = std::accumulate(sendcounts.begin(), sendcounts.end(), 0);
 
-        // // Reassign the class member
-        // point = std::move(new_points[my_rank]);
+        std::vector<real> send_points(total_send, 0);
+        {
+                std::vector<real>::size_type i = 0;
+                for (const std::list<point_type>& pp : new_points)
+                        for (const point_type& p : pp) {
+                                send_points[i] = p[0];
+                                send_points[i+1] = p[1];
+                                i += 2;
+                        }
+        }
 
         // Create a receive buffer
-        id_container::size_type total_recv = std::accumulate(recvcounts.begin(), recvcounts.end(), 0);
-        // total_recv -= recvcounts[my_rank];
-        std::cout << "total_recv = " << total_recv << std::endl;
-        std::vector<real> recv_points(total_recv);
+        const int total_recv = std::accumulate(recvcounts.begin(), recvcounts.end(), 0);
+        std::vector<real> recv_points(total_recv, 0);
 
-        std::cout << "send_points:" << std::endl;
-        for (auto &b : send_points) std::cout << b << " ";
-        std::cout << std::endl;
-
-        // Communicate points
+        // Communicate points (alltoallv)
         comm_world.alltoallv(send_points.data(), sendcounts.data(), sdispls.data(),
                              recv_points.data(), recvcounts.data(), rdispls.data());
-        std::cout << "recv_points:" << std::endl;
-        for (auto &b : recv_points) std::cout << b << " ";
-        std::cout << std::endl;
 
         for (std::vector<real>::size_type i=0; i<recv_points.size(); i+=dim())
                 point.emplace_back(point_type(recv_points[i], recv_points[i+1]));
 
-        // // Move the points into the member point list
-        // point.insert(point.end(), recv_points.begin(), recv_points.end());
-
-        // // Print some statistics
-        // if (comm_world.rank() == 0) {
-        //         auto result = std::minmax_element(npbin.begin(), npbin.end());
-        //         const unsigned int diff = *result.second - *result.first;
-        //         const real imbalance = (static_cast<real>(diff) / glob_np) * 100;
-        //         std::cout << "New imbalance = " << std::setprecision(4) << imbalance << "%" << std::endl;
-        // }
-
         // // Sort after receiving points
         // sort(dimension);
-
-        std::cout << "point:" << std::endl;
-        for (auto &b : point) std::cout << b << " ";
-        std::cout << std::endl;
 }
 
 void PointSet::recompute_global_offset()
