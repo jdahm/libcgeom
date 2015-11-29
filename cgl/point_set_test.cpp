@@ -4,6 +4,7 @@
 using cgl::real;
 using cgl::PointSet;
 using cgl::Point2d;
+using cgl::ProcTopology;
 
 typename PointSet::container_type
 generate_random_points(unsigned long int n, unsigned int prec)
@@ -70,7 +71,7 @@ int main()
                 return 1;
         }
 
-        ps.partition_1d(0);
+        ps.distribute(ProcTopology::Line);
         // write_csv(ps, "point_out");
 
         // TODO: Add a real test

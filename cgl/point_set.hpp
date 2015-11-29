@@ -53,8 +53,8 @@ public:
 
         void sort(unsigned int);
 
-        void partition_1d(unsigned int);
-        
+        void distribute(ProcTopology);
+
         iterator begin();
         iterator end();
         const_iterator begin() const;
@@ -69,15 +69,15 @@ public:
 
         size_type global_offset();
 
-        void balance();
-
 private:
         // Interactions with zoltan
         void z_init();
-        void z_balance();
+        void z_balance(ProcTopology);
         void z_destroy();
 
         void recompute_global_offset();
+
+        void partition_1d(unsigned int);
 
         container_type point;
         bool global_valid;

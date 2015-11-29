@@ -18,9 +18,8 @@ namespace detail
 
 static int ps_num_obj(void *data, int *ierr) {
         PointSet *ps = static_cast<PointSet *>(data);
-        int s = ps->size();
-        (*ierr) = 0;
-        return s;
+        (*ierr) = ZOLTAN_OK;
+        return ps->size();
 }
 
 static void ps_obj_list(void *data, int num_gid_entries,
@@ -37,7 +36,7 @@ static void ps_obj_list(void *data, int num_gid_entries,
                 // skip local_ids
         }
         // skip setting obj_wgts
-        (*ierr) = 0;
+        (*ierr) = ZOLTAN_OK;
         static_cast<void>(num_gid_entries);
         static_cast<void>(num_lid_entries);
         static_cast<void>(local_ids);
@@ -62,8 +61,6 @@ static void ps_geom_multi(void *data, int num_gid_entries,
         PointSet *ps = static_cast<PointSet *>(data);
         PointSet::size_type global_offset = ps->global_offset();
         for (int i=0; i<num_obj; i++) {
-                global_ids[i] = global_offset + i;
-                // skip local_ids
                 // PointSet::const_iterator it = ps->begin() + i;
                 PointSet::const_iterator it = std::next(ps->begin(), i);
                 for (PointSet::size_type d=0; d<PointSet::dim(); d++)
@@ -72,10 +69,12 @@ static void ps_geom_multi(void *data, int num_gid_entries,
         (*ierr) = 0;
         static_cast<void>(num_gid_entries);
         static_cast<void>(num_lid_entries);
+        static_cast<void>(global_ids);
         static_cast<void>(local_ids);
         static_cast<void>(num_dim);
 }
 
+// Migration query functions
 static void ps_mid_migrate_pp(void *data,
                               int num_gid_entries,
                               int num_lid_entries,
@@ -106,7 +105,7 @@ static void ps_mid_migrate_pp(void *data,
                 }
                 i++;
         }
-        (*ierr) = 0;
+        (*ierr) = ZOLTAN_OK;
         static_cast<void>(num_gid_entries);
         static_cast<void>(num_lid_entries);
         static_cast<void>(num_import);
@@ -128,7 +127,7 @@ static void ps_obj_size_multi(void *data, int num_gid_entries,
                               int *ierr) {
         PointSet *ps = static_cast<PointSet *>(data);
         for (int i=0; i<num_ids; i++) sizes[i] = ps->dim() * sizeof(real);
-        (*ierr) = 0;
+        (*ierr) = ZOLTAN_OK;
         static_cast<void>(num_gid_entries);
         static_cast<void>(num_lid_entries);
         static_cast<void>(global_id);
@@ -154,7 +153,7 @@ static void ps_pack_obj_multi(void *data, int num_gid_entries,
                 for (PointSet::size_type d=0; d<PointSet::dim(); d++)
                         memcpy(buf + idx[i] + d*sizeof(real), &(*it)[d], sizeof(real));
         }
-        (*ierr) = 0;
+        (*ierr) = ZOLTAN_OK;
         static_cast<void>(num_gid_entries);
         static_cast<void>(num_lid_entries);
         static_cast<void>(local_ids);
@@ -176,7 +175,7 @@ static void ps_unpack_obj_multi(void *data, int num_gid_entries,
                 memcpy(&y, buf + idx[i] + sizeof(real), sizeof(real));
                 ps->add(Point2d(x, y));
         }
-        (*ierr) = 0;
+        (*ierr) = ZOLTAN_OK;
         static_cast<void>(num_gid_entries);
         static_cast<void>(global_ids);
         static_cast<void>(sizes);
@@ -188,11 +187,11 @@ void PointSet::z_init() {
         // Allocate the Zoltan stack
         zz = Zoltan_Create(par::comm_world().raw());
 
-        // Set parameters
-        Zoltan_Set_Param(zz, "LB_METHOD", "HSFC");
-        Zoltan_Set_Param(zz, "KEEP_CUTS", "1");
-        Zoltan_Set_Param(zz, "LB_APPROACH", "REPARTITION");
-        Zoltan_Set_Param(zz, "MIGRATE_ONLY_PROC_CHANGES", "1");
+        // Set some default sane parameters
+        Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
+        // Zoltan_Set_Param(zz, "KEEP_CUTS", "1");
+        // Zoltan_Set_Param(zz, "LB_APPROACH", "REPARTITION");
+        // Zoltan_Set_Param(zz, "MIGRATE_ONLY_PROC_CHANGES", "1");
         Zoltan_Set_Param(zz, "AUTO_MIGRATE", "TRUE");
         // Set higher for more debugging output
         Zoltan_Set_Param(zz, "DEBUG_LEVEL", "0");
@@ -218,7 +217,7 @@ void PointSet::z_init() {
                                        static_cast<void *>(this));
 }
 
-void PointSet::z_balance() {
+void PointSet::z_balance(ProcTopology top) {
         int
                 ierr,
                 changes,
@@ -234,6 +233,14 @@ void PointSet::z_balance() {
                 *import_local_ids,
                 *export_global_ids,
                 *export_local_ids;
+
+        // Set method
+        if (top == ProcTopology::RCB)
+                Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
+        else if (top == ProcTopology::RIB)
+                Zoltan_Set_Param(zz, "LB_METHOD", "RIB");
+        else
+                throw std::runtime_error("No such Zoltan method");
 
         ierr = Zoltan_LB_Partition(zz,
                                    &changes,
@@ -304,18 +311,16 @@ PointSet PointSet::halve() {
 }
 
 void PointSet::sort(unsigned int dimension) {
-        if (dimension == 0) {
         // Sort
-        point.sort([](const point_type& a, const point_type& b)
-                   { if (std::abs(a[0] - b[0]) < real_eps) return a[1] < b[1];
-                           else return a[0] < b[0]; });
-        }
-        else {
-                // Sort
+        if (dimension == 0)
+                point.sort([](const point_type& a, const point_type& b)
+                           { if (std::abs(a[0] - b[0]) < real_eps) return a[1] < b[1];
+                                   else return a[0] < b[0]; });
+        else
                 point.sort([](const point_type& a, const point_type& b)
                            { if (std::abs(a[1] - b[1]) < real_eps) return a[0] < b[0];
                                    else return a[1] < b[1]; });
-        }
+
         // Remove duplicates (has to be already sorted)
         point.unique([](const point_type& a, const point_type& b)
                      { return (std::abs(a[0] - b[0]) < real_eps) &&
@@ -324,6 +329,25 @@ void PointSet::sort(unsigned int dimension) {
         sorted_dimension = dimension;
 }
 
+void PointSet::distribute(ProcTopology top)
+{
+        if (top == ProcTopology::Line) {
+                partition_1d(0);
+        }
+        else if (top == ProcTopology::NestedGrid) {
+                throw std::runtime_error("No such proc topology");
+        }
+        else {
+                // Zoltan methods
+                if (!z_initialized) {
+                        z_init();
+                        z_initialized = true;
+                }
+                z_balance(top);
+        }
+        // Invalidate global_offset
+        global_valid = false;
+}
 
 PointSet::size_type PointSet::size() const { return point.size(); }
 
@@ -347,15 +371,16 @@ PointSet::size_type PointSet::global_offset()
         return global_offset_;
 }
 
-void PointSet::balance()
+void PointSet::recompute_global_offset()
 {
-        if (!z_initialized) {
-                z_init();
-                z_initialized = true;
-        }
-        z_balance();
-        // Invalidate global_offset
-        global_valid = false;
+        // Perform a scan(+)
+        const par::communicator &comm_world = par::comm_world();
+        const size_type s = size();
+        comm_world.scan(&s, &global_offset_, par::sum());
+        // Scan was inclusive, so must subtract off this value
+        global_offset_ -= size();
+        // Set valid flag
+        global_valid = true;
 }
 
 template <typename T1, typename T2, typename T3>
@@ -380,6 +405,7 @@ std::vector< std::list<T1> > split_multi(std::list<T1>& original_list,
                         }
         }
         result.emplace_back(std::move(current));
+
         return result;
 }
 
@@ -497,20 +523,8 @@ void PointSet::partition_1d(unsigned int dimension)
         // sort(dimension);
 }
 
-void PointSet::recompute_global_offset()
+void write_csv(const PointSet &ps, const std::string &prefix)
 {
-        // Perform a scan(+)
-        const par::communicator &comm_world = par::comm_world();
-        const size_type s = size();
-        comm_world.scan(&s, &global_offset_, par::sum());
-        // Scan was inclusive, so must subtract off this value
-        global_offset_ -= size();
-        // Set valid flag
-        global_valid = true;
-}
-
-
-void write_csv(const PointSet &ps, const std::string &prefix) {
         const par::communicator &comm_world = par::comm_world();
 
         std::stringstream ss;
