@@ -14,6 +14,8 @@
 namespace cgl
 {
 
+enum class Direction {Left, Right, Up, Down};
+
 class Point2d : private std::array<real, 2> {
 public:
         typedef real value_type;
@@ -64,15 +66,20 @@ public:
         friend std::ostream& operator<<(std::ostream&, const Line2d&);
 };
 
-// Might want this later
-// class AABB2d {
-// private:
-//         Point2d left_bottom, top_right;
-// public:
-//         AABB2d(const Point2d&);
+class AABB2d {
+private:
+        Point2d bottom_left, top_right;
+public:
+        AABB2d(const Point2d&);
+        AABB2d(const Point2d&, const Point2d&);
 
-//         void add_point(const Point2d&);
-// };
+        AABB2d operator+(const AABB2d&);
+        AABB2d& operator+=(const AABB2d&);
+
+        void add_point(const Point2d&);
+
+        Point2d bounding_point(Direction dir) const;
+};
 
 
 real tri_area(const Point2d& a, const Point2d& b,

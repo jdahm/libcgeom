@@ -103,13 +103,65 @@ std::ostream& operator<< (std::ostream &os, const Line2d& k)
         return os;
 }
 
-// // Initialize the bounding box with zero area
-// AABBB2d::AABB2d(const Point2d& p) : left_bottom(p), right_top(p) { }
+// Initialize the bounding box
+AABB2d::AABB2d(const Point2d& p) : bottom_left(p), top_right(p) { }
+AABB2d::AABB2d(const Point2d& lb, const Point2d& rt)
+        : bottom_left(lb), top_right(rt) { }
 
-// void AABBB2d::add_point(const Point2d& p)
-// {
-        
-// }
+AABB2d AABB2d::operator+(const AABB2d& other)
+{
+        AABB2d newbb(*this);
+        newbb.add_point(other.bottom_left);
+        newbb.add_point(other.top_right);
+        return newbb;
+}
+
+AABB2d& AABB2d::operator+=(const AABB2d& other)
+{
+        this->add_point(other.bottom_left);
+        this->add_point(other.top_right);
+        return *this;
+}
+
+
+void AABB2d::add_point(const Point2d& p)
+{
+        if (p[0] < bottom_left[0]) bottom_left[0] = p[0];
+        if (p[1] < bottom_left[1]) bottom_left[1] = p[1];
+
+        if (p[0] > top_right[0]) top_right[0] = p[0];
+        if (p[1] > top_right[1]) top_right[1] = p[1];
+}
+
+Point2d AABB2d::bounding_point(Direction dir) const
+{
+        Point2d p;
+
+        switch (dir) {
+        case Direction::Left:
+                p[0] = bottom_left[0] - 0.5 * (top_right[0] - bottom_left[0]);
+                p[1] = bottom_left[1] + 0.5 * (top_right[1] - bottom_left[1]);
+                break;
+        case Direction::Right:
+                p[0] = top_right[0] + 0.5 * (top_right[0] - bottom_left[0]);
+                p[1] = bottom_left[1] + 0.5 * (top_right[1] - bottom_left[1]);
+                break;
+        case Direction::Up:
+                p[0] = bottom_left[0] + 0.5 * (top_right[0] - bottom_left[0]);
+                p[1] = top_right[1] + 0.5 * (top_right[1] - bottom_left[1]);
+                break;
+
+        case Direction::Down:
+                p[0] = bottom_left[0] + 0.5 * (top_right[0] - bottom_left[0]);
+                p[1] = bottom_left[1] - 0.5 * (top_right[1] - bottom_left[1]);
+                break;
+
+        default:
+                throw std::runtime_error("Unknown direction");
+        }
+
+        return p;
+}
 
 
 // Returns twice the area of the oriented triangle (a, b, c), i.e., the
@@ -137,5 +189,6 @@ bool ccw(const Point2d& a, const Point2d& b, const Point2d& c)
 {
         return tri_area(a, b, c) > 0;
 }
+
 
 } // namespace cgl
