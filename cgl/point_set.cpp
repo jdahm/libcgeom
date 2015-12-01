@@ -183,7 +183,8 @@ static void ps_unpack_obj_multi(void *data, int num_gid_entries,
 
 } // namepsace detail
 
-void PointSet::z_init() {
+void PointSet::z_init()
+{
         // Allocate the Zoltan stack
         zz = Zoltan_Create(par::comm_world().raw());
 
@@ -264,17 +265,17 @@ void PointSet::z_balance(ProcTopology top) {
 void PointSet::z_destroy() { Zoltan_Destroy(&zz); }
 
 PointSet::PointSet() : point(), global_valid(false),
-                       zz(0), z_initialized(false), sorted_dimension(-1) { }
+                       zz(0), sorted_dimension(-1) { }
 
 PointSet::PointSet(const container_type& p) :
         point(p), global_valid(false),
-        zz(0), z_initialized(false), sorted_dimension(-1) { }
+        zz(0), sorted_dimension(-1) { }
 
 PointSet::PointSet(container_type&& p) :
         point(p), global_valid(false),
-        zz(0), z_initialized(false), sorted_dimension(-1) { }
+        zz(0), sorted_dimension(-1) { }
 
-PointSet::~PointSet() { if (z_initialized) z_destroy(); }
+PointSet::~PointSet() { if (zz != 0) z_destroy(); }
 
 
 PointSet::PointSet(const PointSet& other) {
@@ -339,10 +340,7 @@ void PointSet::distribute(ProcTopology top)
         }
         else {
                 // Zoltan methods
-                if (!z_initialized) {
-                        z_init();
-                        z_initialized = true;
-                }
+                if (zz == 0) z_init();
                 z_balance(top);
         }
         // Invalidate global_offset

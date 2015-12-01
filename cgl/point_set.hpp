@@ -83,7 +83,6 @@ private:
         bool global_valid;
         size_type global_offset_;
         struct Zoltan_Struct *zz;
-        bool z_initialized;
         int sorted_dimension;
 };
 
