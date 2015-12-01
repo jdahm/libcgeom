@@ -1,6 +1,8 @@
 #ifndef PAR_ENVIRONMENT_HPP
 #define PAR_ENVIRONMENT_HPP
 
+// Based on mpl bindings: https://github.com/rabauke/mpl
+
 #include <mpi.h>
 #include <zoltan.h>
 #include <string>
@@ -26,8 +28,8 @@ class env {
 public:
         env();
 
-	env(const env &) = delete;
-	env& operator=(const env &) = delete;
+	env(const env&) = delete;
+	env& operator=(const env&) = delete;
 
 	threading_modes threading_mode() const;
 
@@ -40,8 +42,8 @@ public:
 
         double wtime() const;
 
-	void buffer_attach(void *buff, int size) const;
-	std::pair<void *, int> buffer_detach() const;
+	void buffer_attach(void*, int) const;
+	std::pair<void*, int> buffer_detach() const;
 };
 
 const env& get_env();
