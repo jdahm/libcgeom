@@ -15,6 +15,10 @@ communicator::communicator(communicator &&other) {
         other.comm=MPI_COMM_NULL;
 }
 
+communicator::communicator(const communicator& other, int color, int key) {
+        MPI_Comm_split(other.comm, color, key, &comm);
+}
+
 communicator::~communicator() {
         if (comm != MPI_COMM_NULL) {
                 int result1, result2;

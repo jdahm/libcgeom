@@ -24,15 +24,16 @@ public:
 
         friend class detail::env;
 
-        communicator(const communicator &other);
-        communicator(communicator &&other);
+        communicator(const communicator&);
+        communicator(communicator&&);
+        communicator(const communicator&, int, int=0);
         ~communicator();
 
-        void operator=(const communicator &)=delete;
-        bool operator==(const communicator &other) const;
-        bool operator!=(const communicator &other) const;
+        communicator& operator=(const communicator &) = delete;
+        bool operator==(const communicator&) const;
+        bool operator!=(const communicator&) const;
 
-        equality_type compare(const communicator &other) const;
+        equality_type compare(const communicator&) const;
 
         int size() const;
         int rank() const;
