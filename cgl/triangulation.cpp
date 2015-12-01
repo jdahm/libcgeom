@@ -36,12 +36,45 @@ void Triangulation::write_txt(const std::string& filePrefix) {
         fst.close();
 }
 
+Delaunay::Delaunay(PointSet& ps) : bounding_box(ps.front()) {
+        // Distribute the points so they are evenly distributed among the
+        // processors in a line
+        ps.distribute(ProcTopology::Line);
 
+        // Loop to add points to the bounding box
+        for (const point_type& p : ps) bounding_box.add_point(p);
 
-Delaunay::Delaunay(PointSet& ps) {
-        edge_type el, er;
+        // Sort the points again in the x-direction
         ps.sort(0);
+
+        // Create merge stack (recursiveness happens here)
+        create_merge_stack(ps, par::comm_world());
+
+        // std::stack<MergeInfo> my_stack = merge_stack;
+        // std::cout << par::comm_world().rank() << std::endl;
+        // while(!my_stack.empty()) //body
+        // {
+        //         auto &p = my_stack.top();
+        //         if (p.active)
+        //                 std::cout << p.comm.rank() << " " << p.neighbor << std::endl;
+        //         my_stack.pop();
+        // }
+
+        // Delaunay the processor portion
+        edge_type el, er;
         init_dc(ps, el, er);
+
+        // // Compute global ids (used in the processor merges below)
+        // fill_global_ids();
+
+        while (!merge_stack.empty()) {
+                // Get the next element
+                MergeInfo& mi = merge_stack.top();
+                // If active, perform the merge
+                if (mi.active) proc_merge(mi.comm, mi.neighbor, mi.neighbor_dir);
+                // Remove the merge info element
+                merge_stack.pop();
+        }
 }
 
 
@@ -164,5 +197,57 @@ void Delaunay::init_dc(PointSet& ps, edge_type& el, edge_type& er)
                 er = rdo;
         }
 }
+
+void Delaunay::create_merge_stack(const PointSet& ps, const par::communicator& comm)
+{
+        unsigned int my_rank = comm.rank();
+        unsigned int num_proc = comm.size();
+
+        // Stop the recursion if num_proc == 1
+        if (num_proc == 1) return;
+
+        unsigned int half = num_proc / 2;
+        // Left = half - 1, Right = half
+        // std::cout << my_rank << "/" << num_proc-1 << " " << half << " " << static_cast<int>(my_rank<half) << std::endl;
+        par::communicator new_comm(comm, my_rank < half);
+
+        merge_stack.emplace(MergeInfo({comm, 0, Direction::Left, (my_rank == half - 1) || (my_rank == half)}));
+        MergeInfo& m = merge_stack.top();
+
+        if (my_rank == half - 1) {
+                m.neighbor = half;
+                m.neighbor_dir = Direction::Right;
+                m.active = true;
+        }
+        else if (my_rank == half) {
+                m.neighbor = half - 1;
+                m.neighbor_dir = Direction::Left;
+                m.active = true;
+        }
+
+        create_merge_stack(ps, new_comm);
+}
+
+void Delaunay::proc_merge(const par::communicator& comm, unsigned int neighbor, Direction dir)
+{
+        // Determine a bounding point outside the AABB2d
+        point_type p = bounding_box.bounding_point(dir);
+
+        // Create a subdivision of the part of the convex hull facing the neighbor
+        Subdivision s = facing_hull(p);
+
+        // // Send the subdivision to neighbor
+        // send_subdivision(s, comm, neighbor);
+
+        // // Receive subdivision from neighbor
+        // Subdivision s = recv_subdivision(comm, neighbor);
+
+        // // Merge the subdivisions
+        // Delaunay& D = *this;
+        // Delaunay& O = dynamic_cast<Delaunay>(s);
+
+        // D += O;
+}
+
 
 } // namespace cgl

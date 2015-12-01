@@ -79,6 +79,7 @@ public:
         typedef typename edge_hash_type::key_type edge_key_type;
         typedef typename edge_hash_type::iterator edge_iterator;
         typedef std::vector<point_type> point_container_type;
+        typedef std::vector<point_type> point_index_container_type;
         typedef typename point_container_type::size_type size_type;
         typedef typename point_container_type::const_iterator point_iterator;
 
@@ -108,8 +109,8 @@ public:
 
         bool left_of(const point_type&, const edge_type&) const;
 
-        // TEMPORARY
-// private:
+        Subdivision facing_hull(const point_type&) const;
+
 protected:
         int add_point(const point_type&);
 
@@ -118,6 +119,7 @@ protected:
         point_container_type point;
         edge_hash_type edge;
         edge_type startedge;
+        point_index_container_type global_id;
 };
 
 } // namespace cgl

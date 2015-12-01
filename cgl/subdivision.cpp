@@ -263,6 +263,20 @@ bool Subdivision::left_of(const point_type& x, const edge_type& e) const
         return ccw(x, get_point(e->Org()), get_point(e->Dest()));
 }
 
+Subdivision Subdivision::facing_hull(const point_type& pt) const
+{
+        Subdivision hull;
+
+        edge_type e = startedge;
+
+        // // Traverse the convex hull
+        // while (left_of(pt, ldi)) { ldi = ldi->Lnext(); }
+        // while (right_of(get_point(ldi->Org()), rdi)) { rdi = rdi->Rprev(); }
+
+        return hull;
+}
+
+
 int Subdivision::add_point(const Subdivision::point_type& p)
 {
         point.push_back(p);
