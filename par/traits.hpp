@@ -18,6 +18,8 @@ struct mpi_datatype<double> { static constexpr MPI_Datatype type = MPI_DOUBLE; }
 template<>
 struct mpi_datatype<unsigned int> { static constexpr MPI_Datatype type = MPI_UNSIGNED; };
 template<>
+struct mpi_datatype<unsigned long int> { static constexpr MPI_Datatype type = MPI_UNSIGNED_LONG; };
+template<>
 struct mpi_datatype<char *> { static constexpr MPI_Datatype type = MPI_CHAR; };
 
 // mpi_op

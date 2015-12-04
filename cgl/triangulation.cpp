@@ -1,6 +1,7 @@
 #include <iomanip>
 #include <fstream>
 #include "cgl/triangulation.hpp"
+#include "par/environment.hpp"
 
 namespace cgl
 {

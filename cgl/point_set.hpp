@@ -5,10 +5,11 @@
 #include <vector>
 #include <sstream>
 #include <fstream>
+#include <string>
 #include <zoltan.h>
 
 #include "cgl/geom2d.hpp"
-#include "par/environment.hpp"
+#include "par/communicator.hpp"
 
 namespace cgl
 {
@@ -31,9 +32,11 @@ public:
 
         PointSet();
 
-        PointSet(const container_type &other);
+        PointSet(const par::communicator&, const container_type&);
 
-        PointSet(container_type &&other);
+        PointSet(const par::communicator&, container_type&&);
+
+        PointSet(const par::communicator&, const std::string&);
 
         ~PointSet();
 
@@ -79,6 +82,7 @@ private:
 
         void partition_1d(unsigned int);
 
+        par::communicator comm;
         container_type point;
         bool global_valid;
         size_type global_offset_;

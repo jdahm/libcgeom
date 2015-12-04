@@ -29,7 +29,7 @@ public:
         communicator(const communicator&, int, int=0);
         ~communicator();
 
-        communicator& operator=(const communicator &) = delete;
+        communicator& operator=(const communicator&);
         bool operator==(const communicator&) const;
         bool operator!=(const communicator&) const;
 
@@ -47,8 +47,8 @@ public:
         MPI_Comm raw() const { return comm; }
 
         template<typename T>
-        void bcast(int root, T* data, int count = 1) const {
-                MPI_Bcast(data,
+        void bcast(int root, T* buf, int count = 1) const {
+                MPI_Bcast(buf,
                           count,
                           mpi_datatype<T>::type,
                           root,
@@ -56,9 +56,9 @@ public:
         }
 
         template<typename O, typename T>
-        void scan(const T* senddata, T* recvdata, O op, int count = 1) const {
-                MPI_Scan(senddata,
-                         recvdata,
+        void scan(const T* sendbuf, T* recvbuf, O op, int count = 1) const {
+                MPI_Scan(sendbuf,
+                         recvbuf,
                          count,
                          mpi_datatype<T>::type,
                          mpi_op<O>::type,
@@ -67,9 +67,9 @@ public:
         }
 
         template<typename O, typename T>
-        void reduce(const T* senddata, T* recvdata, O op, int count = 1) const {
-                MPI_Reduce(&senddata,
-                           &recvdata,
+        void reduce(const T* sendbuf, T* recvbuf, O op, int count = 1) const {
+                MPI_Reduce(&sendbuf,
+                           &recvbuf,
                            count,
                            mpi_datatype<T>::type,
                            mpi_op<O>::type,
@@ -78,9 +78,9 @@ public:
         }
 
         template<typename O, typename T>
-        void allreduce(const T* senddata, T* recvdata, O op, int count = 1) const {
-                MPI_Allreduce(senddata,
-                              recvdata,
+        void allreduce(const T* sendbuf, T* recvbuf, O op, int count = 1) const {
+                MPI_Allreduce(sendbuf,
+                              recvbuf,
                               count,
                               mpi_datatype<T>::type,
                               mpi_op<O>::type,
@@ -89,36 +89,50 @@ public:
         }
 
         template<typename T>
-        void allgather(const T* senddata, T* recvdata, int count = 1) const {
-                MPI_Allgather(senddata,
-                              count,
+        void allgather(const T* sendbuf, int sendcount, T* recvbuf, int recvcount) const {
+                MPI_Allgather(sendbuf,
+                              sendcount,
                               mpi_datatype<T>::type,
-                              recvdata,
-                              count,
+                              recvbuf,
+                              recvcount,
                               mpi_datatype<T>::type,
                               comm);
         }
 
         template<typename T>
-        void alltoall(const T* senddata, unsigned int sendcount,
-                      T* recvdata, unsigned int recvcount) const {
-                MPI_Alltoall(senddata,
+        void allgatherv(const T* sendbuf, int sendcount, T* recvbuf,
+                        const int* recvcounts, const int* displs) const {
+                MPI_Allgatherv(sendbuf,
+                               sendcount,
+                               mpi_datatype<T>::type,
+                               recvbuf,
+                               recvcounts,
+                               displs,
+                               mpi_datatype<T>::type,
+                               comm);
+        }
+
+
+        template<typename T>
+        void alltoall(const T* sendbuf, unsigned int sendcount,
+                      T* recvbuf, unsigned int recvcount) const {
+                MPI_Alltoall(sendbuf,
                              sendcount,
                              mpi_datatype<T>::type,
-                             recvdata,
+                             recvbuf,
                              recvcount,
                              mpi_datatype<T>::type,
                              comm);
         }
 
-        template<typename T, typename V>
-        void alltoallv(const T* senddata, const V* sendcounts, const V* sdispls,
-                       T* recvdata, const V* recvcounts, const V* rdispls) const {
-                MPI_Alltoallv(senddata,
+        template<typename T>
+        void alltoallv(const T* sendbuf, const int* sendcounts, const int* sdispls,
+                       T* recvbuf, const int* recvcounts, const int* rdispls) const {
+                MPI_Alltoallv(sendbuf,
                               sendcounts,
                               sdispls,
                               mpi_datatype<T>::type,
-                              recvdata,
+                              recvbuf,
                               recvcounts,
                               rdispls,
                               mpi_datatype<T>::type,

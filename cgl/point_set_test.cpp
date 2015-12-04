@@ -1,3 +1,4 @@
+#include "par/environment.hpp"
 #include "cgl/point_set.hpp"
 #include <random>
 
@@ -42,7 +43,16 @@ std::vector< std::list<T1> > split_multi(std::list<T1>& original_list, std::vect
 
 int main()
 {
-        PointSet ps(generate_random_points(10, 1e8));
+        {
+                PointSet ps(par::comm_world(), "pointtest1");
+                ps.distribute(ProcTopology::Line);
+        }
+        {
+                PointSet ps(par::comm_world(), "pointtest2");
+                ps.distribute(ProcTopology::Line);
+        }
+
+        // PointSet ps(generate_random_points(10, 1e8));
         // // std::list<int> l = {1,2,3,4,5,6,7,8,9,10};
         // std::list<Point2d> l;
         // l.emplace_back(Point2d(0.1, 1.0));
@@ -66,12 +76,11 @@ int main()
         //         std::cout << std::endl;
         // }
 
-        if (ps.size() != 10) {
-                std::cerr << "Size test failed." << std::endl;
-                return 1;
-        }
+        // if (ps.size() != 10) {
+        //         std::cerr << "Size test failed." << std::endl;
+        //         return 1;
+        // }
 
-        ps.distribute(ProcTopology::Line);
         // write_csv(ps, "point_out");
 
         // TODO: Add a real test
