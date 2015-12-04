@@ -4,6 +4,7 @@
 #include <mpi.h>
 
 #include "par/status.hpp"
+#include "par/request.hpp"
 #include "par/traits.hpp"
 
 namespace par
@@ -138,6 +139,21 @@ public:
                               mpi_datatype<T>::type,
                               comm);
         }
+
+        template<typename T>
+        request isend(const T* data, int dest, int count = 1, int tag = 0) const {
+                MPI_Request req;
+                MPI_Isend(data, count, mpi_datatype<T>::type, dest, tag, comm, &req);
+                return request(req);
+        }
+
+        template<typename T>
+        request irecv(T* data, int source, int count = 1, int tag = 0) const {
+                MPI_Request req;
+                MPI_Irecv(data, count, mpi_datatype<T>::type, source, tag, comm, &req);
+                return request(req);
+        }
+
 };
 
 } // namespace par

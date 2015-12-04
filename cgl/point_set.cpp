@@ -275,26 +275,6 @@ PointSet::PointSet(const par::communicator& comm, container_type&& p) :
         comm(comm), point(p), global_valid(false),
         zz(0), sorted_dimension(-1) { }
 
-PointSet::PointSet(const par::communicator& comm, const std::string& prefix) :
-        comm(comm), global_valid(false), zz(0), sorted_dimension(-1)
-{
-        std::stringstream ss;
-        ss << comm.rank();
-
-        std::string rank;
-        ss >> rank;
-        std::ifstream fst(prefix + "_" + rank + ".csv", std::ios::in);
-
-        while (fst.good()) {
-                real x, y;
-                fst >> x;
-                fst.ignore();
-                fst >> y;
-                if (fst.eof()) break;
-                point.emplace_back(point_type(x, y));
-        }
-}
-
 PointSet::~PointSet() { if (zz != 0) z_destroy(); }
 
 
@@ -631,6 +611,26 @@ void write_csv(const PointSet &ps, const std::string &prefix)
         for (PointSet::const_iterator it=ps.begin(); it!=ps.end(); ++it) {
                 const Point2d &a = *it;
                 fst << a[0] << "," << a[1] << std::endl;
+        }
+
+        fst.close();
+}
+
+void read_csv(PointSet& ps, const std::string& prefix) {
+        std::stringstream ss;
+        ss << ps.comm.rank();
+
+        std::string rank;
+        ss >> rank;
+        std::ifstream fst(prefix + "_" + rank + ".csv", std::ios::in);
+
+        while (fst.good()) {
+                real x, y;
+                fst >> x;
+                fst.ignore();
+                fst >> y;
+                if (fst.eof()) break;
+                ps.add(PointSet::point_type(x, y));
         }
 
         fst.close();

@@ -43,14 +43,14 @@ std::vector< std::list<T1> > split_multi(std::list<T1>& original_list, std::vect
 
 int main()
 {
-        {
-                PointSet ps(par::comm_world(), "pointtest1");
-                ps.distribute(ProcTopology::Line);
-        }
-        {
-                PointSet ps(par::comm_world(), "pointtest2");
-                ps.distribute(ProcTopology::Line);
-        }
+        // {
+        //         PointSet ps(par::comm_world(), "pointtest1");
+        //         ps.distribute(ProcTopology::Line);
+        // }
+        // {
+        //         PointSet ps(par::comm_world(), "pointtest2");
+        //         ps.distribute(ProcTopology::Line);
+        // }
 
         // PointSet ps(generate_random_points(10, 1e8));
         // // std::list<int> l = {1,2,3,4,5,6,7,8,9,10};

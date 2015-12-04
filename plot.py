@@ -5,7 +5,7 @@ import sys
 import numpy as np
 from glob import glob
 
-def plot_edges(filename, point_style='k.', edge_style='k-'):
+def plot_edges(filename, figure=None, point_style='k.', edge_style='k-'):
     # Read file
     with open(filename, mode='r') as f:
         ndim = 2
@@ -19,10 +19,21 @@ def plot_edges(filename, point_style='k.', edge_style='k-'):
     # Edge arrays for plotting
     edgex = np.asarray([[verts[e[0],0], verts[e[1],0]] for e in edges])
     edgey = np.asarray([[verts[e[0],1], verts[e[1],1]] for e in edges])
-    # Create the figure
-    p = plt.figure()
+    if figure is None:
+        # Create the figure
+        p = plt.figure()
+    else:
+        p = figure
     plt.plot(verts[:,0], verts[:,1], point_style, markersize=15)
     plt.plot(edgex.T, edgey.T, edge_style)
+    return p
+
+def plot_edges_parallel(prefix, point_style=('k.',), edge_style=('k-',)):
+    p = plt.figure()
+    for i, f in enumerate(glob(prefix + "_*.txt")):
+        ps = point_style[i] if len(point_style) > 1 else point_style[0]
+        es = edge_style[i] if len(edge_style) > 1 else edge_style[0]
+        plot_edges(f, figure=p, point_style=ps, edge_style=es)
     return p
 
 def _read_csv(file_name):

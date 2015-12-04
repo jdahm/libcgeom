@@ -103,7 +103,7 @@ std::ostream& operator<< (std::ostream &os, const Line2d& k)
         return os;
 }
 
-// Initialize the bounding box
+/* Axis-aligned bounding box */
 AABB2d::AABB2d(const Point2d& p) : bottom_left(p), top_right(p) { }
 AABB2d::AABB2d(const Point2d& lb, const Point2d& rt)
         : bottom_left(lb), top_right(rt) { }
@@ -163,6 +163,16 @@ Point2d AABB2d::bounding_point(Direction dir) const
         return p;
 }
 
+std::array<real, 2> AABB2d::project(unsigned int dim) const
+{
+        return {bottom_left[dim], top_right[dim]};
+}
+
+std::ostream& operator<< (std::ostream& os, const AABB2d& bb) {
+        os << "AABB2d(" << bb.bottom_left << "," << bb.top_right << ")";
+        return os;
+}
+
 
 // Returns twice the area of the oriented triangle (a, b, c), i.e., the
 // area is positive if the triangle is oriented counterclockwise.
@@ -180,7 +190,7 @@ bool in_circle(const Point2d& a, const Point2d& b,
         return (a[0] * a[0] + a[1] * a[1]) * tri_area(b, c, d) -
                (b[0] * b[0] + b[1] * b[1]) * tri_area(a, c, d) +
                (c[0] * c[0] + c[1] * c[1]) * tri_area(a, b, d) -
-               (d[0] * d[0] + d[1] * d[1]) * tri_area(a, b, c) > real_eps;
+               (d[0] * d[0] + d[1] * d[1]) * tri_area(a, b, c) > 0;
 }
 
 

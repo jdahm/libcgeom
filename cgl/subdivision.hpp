@@ -106,8 +106,10 @@ public:
         const point_type& get_point(size_type i) const;
 
         bool right_of(const point_type&, const edge_type&) const;
+        bool right_of(size_type, const edge_type&) const;
 
         bool left_of(const point_type&, const edge_type&) const;
+        bool left_of(size_type, const edge_type&) const;
 
         Subdivision facing_hull(const point_type&) const;
 

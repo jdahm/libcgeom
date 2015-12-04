@@ -263,6 +263,17 @@ bool Subdivision::left_of(const point_type& x, const edge_type& e) const
         return ccw(x, get_point(e->Org()), get_point(e->Dest()));
 }
 
+bool Subdivision::right_of(size_type i, const edge_type& e) const
+{
+        return ccw(get_point(i), get_point(e->Dest()), get_point(e->Org()));
+}
+
+
+bool Subdivision::left_of(size_type i, const edge_type& e) const
+{
+        return ccw(get_point(i), get_point(e->Org()), get_point(e->Dest()));
+}
+
 Subdivision Subdivision::facing_hull(const point_type& pt) const
 {
         Subdivision hull;

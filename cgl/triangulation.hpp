@@ -31,7 +31,7 @@ public:
 private:
         void merge(edge_type&, const edge_type&, const edge_type&, edge_type&);
 
-        void init_dc(PointSet&, edge_type&, edge_type&);
+        void init_dc(PointSet&, edge_type&, edge_type&, int);
 
         void create_merge_stack(const PointSet&, const par::communicator&);
 

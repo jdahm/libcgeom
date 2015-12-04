@@ -14,7 +14,7 @@
 namespace cgl
 {
 
-enum class Direction {Left, Right, Up, Down};
+enum class Direction {Up, Left, Down, Right};
 
 class Point2d : private std::array<real, 2> {
 public:
@@ -78,17 +78,19 @@ public:
 
         void add_point(const Point2d&);
 
-        Point2d bounding_point(Direction dir) const;
+        Point2d bounding_point(Direction) const;
+
+        std::array<real, 2> project(unsigned int) const;
+
+        friend std::ostream& operator<< (std::ostream&, const AABB2d&);
 };
 
 
-real tri_area(const Point2d& a, const Point2d& b,
-                            const Point2d& c);
+real tri_area(const Point2d&, const Point2d&, const Point2d&);
 
-bool in_circle(const Point2d& a, const Point2d& b,
-               const Point2d& c, const Point2d& d);
+bool in_circle(const Point2d&, const Point2d&, const Point2d&, const Point2d&);
 
-bool ccw(const Point2d& a, const Point2d& b, const Point2d& c);
+bool ccw(const Point2d&, const Point2d&, const Point2d&);
 
 } // namespace cgl
 

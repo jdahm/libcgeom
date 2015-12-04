@@ -30,13 +30,13 @@ public:
 
         static constexpr size_type dim() { return 2; }
 
+        friend void read_csv(PointSet& ps, const std::string& prefix);
+
         PointSet();
 
         PointSet(const par::communicator&, const container_type&);
 
         PointSet(const par::communicator&, container_type&&);
-
-        PointSet(const par::communicator&, const std::string&);
 
         ~PointSet();
 
@@ -90,7 +90,8 @@ private:
         int sorted_dimension;
 };
 
-void write_csv(const PointSet &ps, const std::string &prefix);
+void write_csv(const PointSet& ps, const std::string& prefix);
+void read_csv(PointSet& ps, const std::string& prefix);
 
 template <typename T>
 std::vector< std::list<T> > split_multi(std::list<T>& original_list, std::vector<T>& bound);
