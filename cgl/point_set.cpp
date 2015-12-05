@@ -185,8 +185,10 @@ static void ps_unpack_obj_multi(void *data, int num_gid_entries,
 
 void PointSet::z_init()
 {
+        const par::communicator &comm_world = par::comm_world();
+
         // Allocate the Zoltan stack
-        zz = Zoltan_Create(comm.raw());
+        zz = Zoltan_Create(comm_world.raw());
 
         // Set some default sane parameters
         Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
@@ -264,22 +266,21 @@ void PointSet::z_balance(ProcTopology top) {
 
 void PointSet::z_destroy() { Zoltan_Destroy(&zz); }
 
-PointSet::PointSet() : comm(par::comm_world()), point(), global_valid(false),
+PointSet::PointSet() : point(), global_valid(false),
                        zz(0), sorted_dimension(-1) { }
 
-PointSet::PointSet(const par::communicator& comm, const container_type& p) :
-        comm(comm), point(p), global_valid(false),
+PointSet::PointSet(const container_type& p) :
+        point(p), global_valid(false),
         zz(0), sorted_dimension(-1) { }
 
-PointSet::PointSet(const par::communicator& comm, container_type&& p) :
-        comm(comm), point(p), global_valid(false),
+PointSet::PointSet(container_type&& p) :
+        point(p), global_valid(false),
         zz(0), sorted_dimension(-1) { }
 
 PointSet::~PointSet() { if (zz != 0) z_destroy(); }
 
-
 PointSet::PointSet(const PointSet& other) :
-        comm(other.comm), point(other.point), global_valid(other.global_valid),
+        point(other.point), global_valid(other.global_valid),
         global_offset_(other.global_offset_) { }
 
 PointSet& PointSet::operator=(const PointSet& other) {
@@ -301,7 +302,7 @@ PointSet PointSet::split(PointSet::iterator it) {
         it = begin();
 
         // Return a PointSet
-        return PointSet(comm, pointR);
+        return PointSet(pointR);
 }
 
 PointSet PointSet::halve() {
@@ -410,6 +411,7 @@ std::vector< std::list<T1> > split_multi(std::list<T1>& original_list,
 void PointSet::partition_1d(unsigned int dimen)
 {
         typedef std::vector<unsigned int> id_container;
+        const par::communicator &comm = par::comm_world();
         const unsigned int num_proc = comm.size();
         const unsigned int my_rank = comm.rank();
 
@@ -616,9 +618,12 @@ void write_csv(const PointSet &ps, const std::string &prefix)
         fst.close();
 }
 
-void read_csv(PointSet& ps, const std::string& prefix) {
+void read_csv(PointSet& ps, const std::string& prefix)
+{
+        const par::communicator &comm_world = par::comm_world();
+
         std::stringstream ss;
-        ss << ps.comm.rank();
+        ss << comm_world.rank();
 
         std::string rank;
         ss >> rank;

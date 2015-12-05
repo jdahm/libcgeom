@@ -1,7 +1,5 @@
 #include <iomanip>
-#include <fstream>
 #include <string>
-#include <sstream>
 #include "cgl/triangulation.hpp"
 #include "par/environment.hpp"
 
@@ -19,55 +17,22 @@ void Triangulation::swap(const edge_type& e)
         e->set_id(a->Dest(), b->Dest());
 }
 
-
-void Triangulation::write_txt(const std::string& filePrefix) {
-        const par::communicator& comm_world = par::comm_world();
-
-        std::stringstream ss;
-        ss << comm_world.rank();
-        std::string rank;
-        ss >> rank;
-        std::ofstream fst(filePrefix + "_" + rank + ".txt", std::ios::out);
-
-        fst << num_points() << " " << num_edges() << std::endl;
-
-        for (Point2d& p : point)
-                fst << std::scientific << std::setprecision(16) << p[0] << " "
-                    << std::scientific << std::setprecision(16) << p[1]
-                    << std::endl;
-
-        edge_iterator it = edge.begin_loop();
-        while (edge.valid(it)) {
-                fst << it->e->Org() << " " << it->e->Dest() << std::endl;
-                it = edge.iterate(it);
-        }
-
-        fst.close();
-}
-
 Delaunay::Delaunay(PointSet& ps) : bounding_box(ps.front()) {
+        if (ps.size() == 1) throw std::runtime_error("Need more than one point.");
+
         // Sort the points again in the x-direction
         ps.sort(0);
 
         // Create merge stack (recursiveness happens here)
-        create_merge_stack(ps, par::comm_world());
+        create_merge_stack();
 
         // Loop to add points to the bounding box
         std::cout << "point: " << std::endl;
-        std::cout << std::endl;
         for (auto& p : ps) std::cout << p << " ";
+        std::cout << std::endl;
+
         for (const point_type& p : ps) bounding_box.add_point(p);
         std::cout << bounding_box << std::endl;
-
-        // std::stack<MergeInfo> my_stack = merge_stack;
-        // std::cout << par::comm_world().rank() << std::endl;
-        // while(!my_stack.empty()) //body
-        // {
-        //         auto &p = my_stack.top();
-        //         if (p.active)
-        //                 std::cout << p.comm.rank() << " " << p.neighbor << std::endl;
-        //         my_stack.pop();
-        // }
 
         // Delaunay the processor portion
         edge_type el, er;
@@ -78,11 +43,14 @@ Delaunay::Delaunay(PointSet& ps) : bounding_box(ps.front()) {
         // // Compute global ids (used in the processor merges below)
         // fill_global_ids();
 
+        std::cout << "Stack size = " << merge_stack.size() << std::endl;
         while (!merge_stack.empty()) {
                 // Get the next element
                 MergeInfo& mi = merge_stack.top();
                 // If active, perform the merge
-                if (mi.active) proc_merge(mi.comm, mi.neighbor, mi.neighbor_dir);
+                proc_merge(mi.neighbor,
+                           mi.neighbor_dir,
+                           mi.neighbor_dir == Direction::Left ? el : er);
                 // Remove the merge info element
                 merge_stack.pop();
         }
@@ -105,11 +73,10 @@ void Delaunay::merge(edge_type& ldo, const edge_type& ldi,
                 // fail the circle test.
                 edge_type lcand = basel->Sym()->Onext();
                 if (right_of(lcand->Dest(), basel))
-                        while (in_circle(
-                                       get_point(basel->Dest()),
-                                       get_point(basel->Org()),
-                                       get_point(lcand->Dest()),
-                                       get_point(lcand->Onext()->Dest()))) {
+                        while (in_circle(get_point(basel->Dest()),
+                                         get_point(basel->Org()),
+                                         get_point(lcand->Dest()),
+                                         get_point(lcand->Onext()->Dest()))) {
                                 edge_type t = lcand->Onext();
                                 remove_edge(lcand);
                                 lcand = t;
@@ -119,11 +86,10 @@ void Delaunay::merge(edge_type& ldo, const edge_type& ldi,
                 // R edges
                 edge_type rcand = basel->Oprev();
                 if (right_of(rcand->Dest(), basel))
-                        while (in_circle(
-                                       get_point(basel->Dest()),
-                                       get_point(basel->Org()),
-                                       get_point(rcand->Dest()),
-                                       get_point(rcand->Oprev()->Dest()))) {
+                        while (in_circle(get_point(basel->Dest()),
+                                         get_point(basel->Org()),
+                                         get_point(rcand->Dest()),
+                                         get_point(rcand->Oprev()->Dest()))) {
                                 edge_type t = rcand->Oprev();
                                 remove_edge(rcand);
                                 rcand = t;
@@ -184,9 +150,6 @@ void Delaunay::init_dc(PointSet& ps, edge_type& el, edge_type& er, int i)
                         er = eb->Sym();
                 }
         }
-        else if (ps.size() == 1) {
-                throw std::runtime_error("Cannot handle 1 point. This happening means there's a bug somewhere else.");
-        }
         else {
                 // Halve the point set
                 PointSet psr = ps.halve();
@@ -215,56 +178,60 @@ void Delaunay::init_dc(PointSet& ps, edge_type& el, edge_type& er, int i)
         }
 }
 
-void Delaunay::create_merge_stack(const PointSet& ps, const par::communicator& comm)
+void Delaunay::create_merge_stack()
 {
-        unsigned int my_rank = comm.rank();
-        unsigned int num_proc = comm.size();
+        const par::communicator &comm_world = par::comm_world();
 
-        // Stop the recursion if num_proc == 1
+        const int my_rank = comm_world.rank();
+        const int num_proc = comm_world.size();
+
         if (num_proc == 1) return;
 
-        unsigned int half = num_proc / 2;
-        // Left = half - 1, Right = half
-        // std::cout << my_rank << "/" << num_proc-1 << " " << half << " " << static_cast<int>(my_rank<half) << std::endl;
-        par::communicator new_comm(comm, my_rank < half);
-
-        merge_stack.emplace(MergeInfo({comm, 0, Direction::Left, (my_rank == half - 1) || (my_rank == half)}));
-        MergeInfo& m = merge_stack.top();
-
-        if (my_rank == half - 1) {
-                m.neighbor = half;
-                m.neighbor_dir = Direction::Right;
-                m.active = true;
+        if (my_rank % 2) {
+                const int neighbor = my_rank - 1;
+                if (neighbor >= 0)
+                        merge_stack.emplace(MergeInfo({neighbor, Direction::Left}));
         }
-        else if (my_rank == half) {
-                m.neighbor = half - 1;
-                m.neighbor_dir = Direction::Left;
-                m.active = true;
+        else {
+                const int neighbor = my_rank + 1;
+                if (neighbor < num_proc)
+                        merge_stack.emplace(MergeInfo({neighbor, Direction::Right}));
         }
 
-        create_merge_stack(ps, new_comm);
+        if (num_proc == 2) return;
+
+        if (my_rank % 2) {
+                const int neighbor = my_rank + 1;
+                if (neighbor < num_proc)
+                        merge_stack.emplace(MergeInfo({neighbor, Direction::Right}));
+        }
+        else {
+                const int neighbor = my_rank - 1;
+                if (neighbor >= 0)
+                        merge_stack.emplace(MergeInfo({neighbor, Direction::Left}));
+        }
 }
 
-void Delaunay::proc_merge(const par::communicator& comm, unsigned int neighbor, Direction dir)
+void Delaunay::proc_merge(unsigned int neighbor, Direction dir, edge_type& e)
 {
-        // 1. Exchange facing part of bounding box
-        std::array<real, 2> bounds = bounding_box.project(static_cast<int>(dir) % 2);
+        // // 1. Exchange facing part of bounding box
+        // std::array<real, 2> bounds = bounding_box.project(static_cast<int>(dir) % 2);
 
-        std::array<real, 2> neighbor_bounds;
+        // std::array<real, 2> neighbor_bounds;
 
-        comm.isend(bounds.data(), neighbor, 2);
-        { par::request rr = comm.irecv(neighbor_bounds.data(), neighbor, 2); rr.wait(); }
+        // comm.isend(bounds.data(), neighbor, 2);
+        // { par::request rr = comm.irecv(neighbor_bounds.data(), neighbor, 2); rr.wait(); }
 
-        // Have bounds
-        std::cout << "neighbor = " << neighbor << ": " << neighbor_bounds[0] << " " << neighbor_bounds[1] << std::endl;
-        
-        // // Determine a bounding point outside the AABB2d
-        // point_type p = bounding_box.bounding_point(dir);
+        // // Have bounds
+        // std::cout << "neighbor = " << neighbor << ": " << neighbor_bounds[0] << " " << neighbor_bounds[1] << std::endl;
 
-        // // Create a subdivision of the part of the convex hull facing the neighbor
-        // Subdivision s = facing_hull(p);
+        // Determine a bounding point outside the AABB2d
+        point_type p = bounding_box.bounding_point(dir);
 
-        // // // Send the subdivision to neighbor
+        // Create a subdivision of the part of the convex hull facing the neighbor
+        Subdivision s = extract_hull(dir == Direction::Left ? e : e->Sym(), p);
+
+        // // // send the subdivision to neighbor
         // // send_subdivision(s, comm, neighbor);
 
         // // // Receive subdivision from neighbor

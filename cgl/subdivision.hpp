@@ -5,6 +5,7 @@
 #include <vector>
 #include <list>
 #include <array>
+#include <string>
 
 #include "cgl/quad_edge.hpp"
 #include "cgl/geom2d.hpp"
@@ -111,7 +112,9 @@ public:
         bool left_of(const point_type&, const edge_type&) const;
         bool left_of(size_type, const edge_type&) const;
 
-        Subdivision facing_hull(const point_type&) const;
+        Subdivision extract_hull(edge_type, const point_type&) const;
+
+        void write_txt(const std::string&);
 
 protected:
         int add_point(const point_type&);

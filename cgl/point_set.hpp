@@ -34,9 +34,9 @@ public:
 
         PointSet();
 
-        PointSet(const par::communicator&, const container_type&);
+        PointSet(const container_type&);
 
-        PointSet(const par::communicator&, container_type&&);
+        PointSet(container_type&&);
 
         ~PointSet();
 
@@ -82,7 +82,6 @@ private:
 
         void partition_1d(unsigned int);
 
-        par::communicator comm;
         container_type point;
         bool global_valid;
         size_type global_offset_;

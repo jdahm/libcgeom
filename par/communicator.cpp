@@ -29,11 +29,6 @@ communicator::~communicator() {
         }
 }
 
-communicator& communicator::operator=(const communicator& other) {
-        MPI_Comm_dup(other.comm, &comm);
-        return *this;
-}
-
 bool communicator::operator==(const communicator &other) const {
         int result;
         MPI_Comm_compare(comm, other.comm, &result);

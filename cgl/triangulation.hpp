@@ -11,17 +11,13 @@ namespace cgl
 {
 
 struct MergeInfo {
-        par::communicator comm;
-        unsigned int neighbor;
+        int neighbor;
         Direction neighbor_dir;
-        bool active;
 };
 
 class Triangulation : public Subdivision {
 public:
         void swap(const edge_type&);
-
-        void write_txt(const std::string& filePrefix);
 };
 
 class Delaunay : public Triangulation {
@@ -29,13 +25,13 @@ public:
         Delaunay(PointSet&);
 
 private:
+        void create_merge_stack();
+
         void merge(edge_type&, const edge_type&, const edge_type&, edge_type&);
 
         void init_dc(PointSet&, edge_type&, edge_type&, int);
 
-        void create_merge_stack(const PointSet&, const par::communicator&);
-
-        void proc_merge(const par::communicator&, unsigned int, Direction);
+        void proc_merge(unsigned int, Direction, edge_type&);
 
         std::stack<MergeInfo> merge_stack;
         AABB2d bounding_box;

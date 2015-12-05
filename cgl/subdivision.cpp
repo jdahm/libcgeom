@@ -1,6 +1,10 @@
 #include <stdexcept> // std::runtime_error
+#include <sstream>
+#include <fstream>
+#include <iomanip>
 
 #include "cgl/subdivision.hpp"
+#include "par/environment.hpp"
 
 namespace cgl
 {
@@ -100,11 +104,6 @@ EdgeHashTable::iterator EdgeHashTable::iterate(EdgeHashTable::iterator it)
                         if (index >= table.size()) break;
                         if (table[index].size() != 0) break;
                 }
-                // if (index < table.size() - 1) {
-                //         while (table[index].size())
-                // }
-                // do {index++; } while (table[index].size() == 0 || index < table.size() - 1);
-                // do { if (index < table.size() - 1) index++; } while (table[index].size() == 0);
                 it = (index < table.size()) ? table[index].begin() : end();
         }
 
@@ -120,8 +119,7 @@ EdgeHashTable::iterator EdgeHashTable::end()
 EdgeHashTable::key_type EdgeHashTable::get_vkey(const EdgeHashTable::key_type& key) const
 {
         return (key[0] > key[1]) ?
-                key_type({key[1], key[0]}) :
-                key_type({key[0], key[1]});
+                key_type({key[1], key[0]}) : key_type({key[0], key[1]});
 }
 
 bool EdgeHashTable::valid_vkey(const key_type& vkey) const
@@ -274,19 +272,68 @@ bool Subdivision::left_of(size_type i, const edge_type& e) const
         return ccw(get_point(i), get_point(e->Org()), get_point(e->Dest()));
 }
 
-Subdivision Subdivision::facing_hull(const point_type& pt) const
+Subdivision Subdivision::extract_hull(edge_type e, const point_type& pt) const
 {
+        // e must be oriented ccw around the convex hull
         Subdivision hull;
 
-        edge_type e = startedge;
+        // Get to the beginning of the part of the hull to extract
+        if (right_of(pt, e)) {
+                while (right_of(pt, e)) e = e->Oprev()->Sym();
+        }
+        else {
+                while (left_of(pt, e) ) e = e->Oprev()->Sym();
+                while (right_of(pt, e)) e = e->Oprev()->Sym();
+        }
 
-        // // Traverse the convex hull
-        // while (left_of(pt, ldi)) { ldi = ldi->Lnext(); }
-        // while (right_of(get_point(ldi->Org()), rdi)) { rdi = rdi->Rprev(); }
+        // Add edge
+        edge_type h_e = hull.add_edge(get_point(e->Org()), get_point(e->Dest()));
+
+        do {
+                // Flip the edge
+                e = e->Sym();
+                h_e = h_e->Sym();
+
+                // Record reference to former (flipped) edge
+                const edge_type el = e;
+                const edge_type h_el = h_e;
+
+                // Add edges
+                while (e->Oprev() != el) {
+                        e = e->Oprev();
+                        h_e = hull.extend_edge(h_el->Sym(), get_point(e->Dest()));
+                }
+        } while (right_of(pt, e));
+
+        hull.write_txt("hull");
 
         return hull;
 }
 
+void Subdivision::write_txt(const std::string& prefix) {
+        const par::communicator& comm_world = par::comm_world();
+
+        std::stringstream ss;
+        ss << comm_world.rank();
+        std::string rank;
+        ss >> rank;
+        std::ofstream fst(prefix + "_" + rank + ".txt", std::ios::out);
+
+        fst << num_points() << " " << num_edges() << std::endl;
+
+        for (Point2d& p : point)
+                fst << std::scientific << std::setprecision(16) << p[0] << " "
+                    << std::scientific << std::setprecision(16) << p[1]
+                    << std::endl;
+
+        edge_iterator it = edge.begin_loop();
+        while (edge.valid(it)) {
+                fst << it->e->Org() << " " << it->e->Dest() << std::endl;
+                it = edge.iterate(it);
+        }
+
+        fst.close();
+}
 
 int Subdivision::add_point(const Subdivision::point_type& p)
 {

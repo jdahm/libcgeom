@@ -30,7 +30,7 @@ public:
         communicator(const communicator&, int, int=0);
         ~communicator();
 
-        communicator& operator=(const communicator&);
+        communicator& operator=(const communicator&) = delete;
         bool operator==(const communicator&) const;
         bool operator!=(const communicator&) const;
 

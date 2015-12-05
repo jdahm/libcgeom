@@ -187,10 +187,11 @@ real tri_area(const Point2d& a, const Point2d& b, const Point2d& c)
 bool in_circle(const Point2d& a, const Point2d& b,
                const Point2d& c, const Point2d& d)
 {
-        return (a[0] * a[0] + a[1] * a[1]) * tri_area(b, c, d) -
-               (b[0] * b[0] + b[1] * b[1]) * tri_area(a, c, d) +
-               (c[0] * c[0] + c[1] * c[1]) * tri_area(a, b, d) -
-               (d[0] * d[0] + d[1] * d[1]) * tri_area(a, b, c) > 0;
+        return
+                (a[0] * a[0] + a[1] * a[1]) * tri_area(b, c, d) -
+                (b[0] * b[0] + b[1] * b[1]) * tri_area(a, c, d) +
+                (c[0] * c[0] + c[1] * c[1]) * tri_area(a, b, d) -
+                (d[0] * d[0] + d[1] * d[1]) * tri_area(a, b, c) > real_eps;
 }
 
 
