@@ -73,8 +73,8 @@ bool test_txt(const std::string &fileName) {
         // Compare it
         bool equal = compare_files("._out_0.txt", fileName);
 
-        // // Remove the temporary file
-        // std::remove("._out.txt");
+        // Remove the temporary file
+        std::remove("._out_0.txt");
 
         return equal;
 }
