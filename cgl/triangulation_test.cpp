@@ -58,7 +58,7 @@ bool test_txt(const std::string &fileName) {
         fst >> nLine;
 
         // Read in points
-        for (PointList::size_type i = 0; i<nPoint; i++) {
+        for (PointList::size_type i=0; i<nPoint; i++) {
                 real x, y;
                 fst >> x;
                 fst >> y;
@@ -71,10 +71,10 @@ bool test_txt(const std::string &fileName) {
         dt.write_txt("._out");
 
         // Compare it
-        bool equal = compare_files("._out.txt", fileName);
+        bool equal = compare_files("._out_0.txt", fileName);
 
-        // Remove the temporary file
-        std::remove("._out.txt");
+        // // Remove the temporary file
+        // std::remove("._out.txt");
 
         return equal;
 }

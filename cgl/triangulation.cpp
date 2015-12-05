@@ -27,23 +27,15 @@ Delaunay::Delaunay(PointSet& ps) : bounding_box(ps.front()) {
         create_merge_stack();
 
         // Loop to add points to the bounding box
-        std::cout << "point: " << std::endl;
-        for (auto& p : ps) std::cout << p << " ";
-        std::cout << std::endl;
-
         for (const point_type& p : ps) bounding_box.add_point(p);
-        std::cout << bounding_box << std::endl;
 
         // Delaunay the processor portion
         edge_type el, er;
         init_dc(ps, el, er, 0);
-        std::cout << "el: " << get_point(el->Org()) << "," << get_point(el->Dest()) << std::endl;
-        std::cout << "er: " << get_point(er->Org()) << "," << get_point(er->Dest()) << std::endl;
 
         // // Compute global ids (used in the processor merges below)
         // fill_global_ids();
 
-        std::cout << "Stack size = " << merge_stack.size() << std::endl;
         while (!merge_stack.empty()) {
                 // Get the next element
                 MergeInfo& mi = merge_stack.top();
