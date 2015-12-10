@@ -70,7 +70,6 @@ private:
 
 } // namespace detail
 
-
 class Subdivision {
 public:
         typedef Point2d point_type;
@@ -112,7 +111,9 @@ public:
         bool left_of(const point_type&, const edge_type&) const;
         bool left_of(size_type, const edge_type&) const;
 
-        Subdivision extract_hull(edge_type, const point_type&) const;
+        Subdivision extract_entire_hull(edge_type, const point_type&) const;
+        std::vector<real> extract_left_hull(edge_type, const point_type&) const;
+        std::vector<real> extract_right_hull(edge_type, const point_type&) const;
 
         void write_txt(const std::string&);
 

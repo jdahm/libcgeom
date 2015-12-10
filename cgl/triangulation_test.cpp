@@ -19,7 +19,6 @@ bool range_equal(InputIterator1 first1, InputIterator1 last1,
                  InputIterator2 first2, InputIterator2 last2) {
         while (first1 != last1 && first2 != last2) {
                 if (*first1 != *first2) return false;
-
                 ++first1;
                 ++first2;
         }
@@ -88,21 +87,3 @@ int main() {
 
         return 0;
 }
-
-
-// typename PointSet::container_type
-// generate_random_points(unsigned long int n, unsigned int prec)
-// {
-//         std::random_device rd;
-//         std::mt19937 gen(rd());
-//         std::uniform_int_distribution<> dis(-prec, prec);
-//         typename PointSet::container_type point;
-
-//         for (unsigned long int np = 0; np < n; np++) {
-//                 real x = static_cast<real>(dis(gen)) / static_cast<real>(prec);
-//                 real y = static_cast<real>(dis(gen)) / static_cast<real>(prec);
-//                 point.push_back(Point2d(x, y));
-//         }
-
-//         return point;
-// }

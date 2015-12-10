@@ -36,14 +36,14 @@ def plot_edges_parallel(prefix, point_style=('k.',), edge_style=('k-',)):
         plot_edges(f, figure=p, point_style=ps, edge_style=es)
     return p
 
-def _read_csv(file_name):
+def read_points(file_name, delim=' '):
     with open(file_name, mode='r') as f:
         # Skip the header
         f.readline()
-        return np.asarray([(float(l.split(',')[0]), float(l.split(',')[1])) for l in f])
+        return np.asarray([(float(l.split(delim)[0]), float(l.split(delim)[1])) for l in f])
 
-def plot_partition1d(prefix, partition, point_style='k.', line_style='r-', **kwargs):
-    point = np.concatenate([_read_csv(f) for f in glob(prefix+"_*.csv")], axis=0)
+def plot_partition1d(prefix, partition, delim=' ', ext='txt', point_style='k.', line_style='r-', **kwargs):
+    point = np.concatenate([read_points(f, delim=delim) for f in glob(prefix+"_*."+ext)], axis=0)
     xmin = point[:,0].min()
     xmax = point[:,0].max()
     ymin = point[:,1].min()
@@ -63,10 +63,10 @@ def plot_partition1d(prefix, partition, point_style='k.', line_style='r-', **kwa
         plt.plot([bound, bound], [ymin, ymax], line_style)
     return p
 
-def plot_partitioned_points(prefix, point_styles=('bs', 'r^', 'gv', 'cx'), **kwargs):
+def plot_partitioned_points(prefix, delim=' ', ext='txt', point_styles=('bs', 'r^', 'gv', 'cx'), **kwargs):
     p = plt.figure()
-    for i, f in enumerate(glob(prefix+"_*.csv")):
-        point = _read_csv(f)
+    for i, f in enumerate(glob(prefix+"_*."+ext)):
+        point = read_points(f, delim=delim)
         plt.plot(point[:,0], point[:,1], point_styles[i])
     if 'xlim' in kwargs:
         plt.xlim(kwargs['xlim'])

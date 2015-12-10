@@ -9,6 +9,7 @@
 #include <zoltan.h>
 
 #include "cgl/geom2d.hpp"
+#include "cgl/load_balance.hpp"
 #include "par/communicator.hpp"
 
 namespace cgl
@@ -38,8 +39,6 @@ public:
 
         PointSet(container_type&&);
 
-        ~PointSet();
-
         PointSet(const PointSet &other);
 
         PointSet& operator=(const PointSet &other);
@@ -56,7 +55,7 @@ public:
 
         void sort(unsigned int);
 
-        void distribute(ProcTopology);
+        void distribute(PSTopology, LBMethod, unsigned int);
 
         iterator begin();
         iterator end();
@@ -73,27 +72,14 @@ public:
         size_type global_offset();
 
 private:
-        // Interactions with zoltan
-        void z_init();
-        void z_balance(ProcTopology);
-        void z_destroy();
-
         void recompute_global_offset();
 
-        void partition_1d(unsigned int);
-
         container_type point;
-        bool global_valid;
-        size_type global_offset_;
-        struct Zoltan_Struct *zz;
         int sorted_dimension;
 };
 
-void write_csv(const PointSet& ps, const std::string& prefix);
-void read_csv(PointSet& ps, const std::string& prefix);
-
-template <typename T>
-std::vector< std::list<T> > split_multi(std::list<T>& original_list, std::vector<T>& bound);
+void write_txt(const PointSet&, const std::string&);
+void read_txt(PointSet&, const std::string&);
 
 } // namespace cgl
 

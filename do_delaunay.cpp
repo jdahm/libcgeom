@@ -9,7 +9,6 @@
 #include "cgl/point_set.hpp"
 #include "cgl/triangulation.hpp"
 
-using cgl::ProcTopology;
 using cgl::real;
 using cgl::Point2d;
 using cgl::PointSet;
@@ -71,7 +70,6 @@ void read_txt(const std::string& fileName, PointSet& ps,
 
         // Open the file
         std::ifstream fst(fileName, std::ios::in);
-        const real delta_angle = 0.01;
 
         // Number of points and lines
         PointList::size_type nPoint;
@@ -84,9 +82,6 @@ void read_txt(const std::string& fileName, PointSet& ps,
                 real x, y;
                 fst >> x;
                 fst >> y;
-                // real xp, yp;
-                // xp = x * std::cos(delta_angle) - y * std::sin(delta_angle);
-                // yp = x * std::sin(delta_angle) + y * std::cos(delta_angle);
                 // x = std::sqrt(x*x + y*y) * std::cos(std::atan(y/x) + angle);
                 // y = std::sqrt(x*x + y*y) * std::sin(std::atan(y/x) + angle);
                 ps.add(Point2d(x, y));
@@ -118,11 +113,13 @@ PointSet generate_random_pointset(unsigned long int n, unsigned int prec) {
         std::list<Point2d> point;
         PointSet ps;
 
-        for (unsigned long int np = 0; np < n; np++) {
-                real x = static_cast<real>(dis(gen)) / static_cast<real>(prec);
-                real y = static_cast<real>(dis(gen)) / static_cast<real>(prec);
-                ps.add(Point2d(x, y));
-        }
+        const par::communicator& comm_world = par::comm_world();
+        // if (comm_world.rank() != 0)
+        for (unsigned long int np = 0; np < n - comm_world.rank(); np++) {
+                        real x = static_cast<real>(dis(gen)) / static_cast<real>(prec);
+                        real y = static_cast<real>(dis(gen)) / static_cast<real>(prec);
+                        ps.add(Point2d(x, y));
+                }
 
         return ps;
 }
@@ -160,7 +157,7 @@ int main(int argc, char *argv[]) {
 
         // Distribute the points so they are evenly distributed among the
         // processors in a line
-        ps.distribute(ProcTopology::Line);
+        ps.distribute(cgl::PSTopology::Unary, cgl::LBMethod::S2A2, 0);
 
         // Delaunay (DC)
         cgl::Delaunay DT(ps);

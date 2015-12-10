@@ -272,7 +272,7 @@ bool Subdivision::left_of(size_type i, const edge_type& e) const
         return ccw(get_point(i), get_point(e->Org()), get_point(e->Dest()));
 }
 
-Subdivision Subdivision::extract_hull(edge_type e, const point_type& pt) const
+Subdivision Subdivision::extract_entire_hull(edge_type e, const point_type& pt) const
 {
         // e must be oriented ccw around the convex hull
         Subdivision hull;
@@ -308,6 +308,70 @@ Subdivision Subdivision::extract_hull(edge_type e, const point_type& pt) const
         hull.write_txt("hull");
 
         return hull;
+}
+
+std::vector<real> Subdivision::extract_left_hull(edge_type e, const point_type& pt) const
+{
+        // e must be oriented ccw around the convex hull
+        std::vector<real> h;
+
+        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
+        std::cout << "START" << std::endl;
+        // Get to the beginning of the part of the hull to extract
+        e = e->Sym();
+        if (left_of(pt, e)) {
+                throw std::runtime_error("Need to implement");
+        }
+        else {
+                while (right_of(pt, e)) e = e->Dprev()->Sym();
+        }
+        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
+        std::cout << "----------"<< std::endl;
+        push_back_point2d(h, get_point(e->Org()));
+
+        do {
+                push_back_point2d(h, get_point(e->Dest()));
+                push_back_point2d(h, get_point(e->Oprev()->Dest()));
+                e = e->Dprev()->Sym();
+        } while (left_of(pt, e));
+
+        for (auto& a : h) std::cout << a << " ";
+        std::cout << std::endl;
+        // h.write_txt("hull");
+
+        return h;
+}
+
+std::vector<real> Subdivision::extract_right_hull(edge_type e, const point_type& pt) const
+{
+        // e must be oriented ccw around the convex hull
+        std::vector<real> h;
+        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
+        std::cout << "START" << std::endl;
+        // Get to the beginning of the part of the hull to extract
+        if (left_of(pt, e)) {
+                while (left_of(pt, e->Dprev()->Sym())) e = e->Dprev()->Sym();
+        }
+        else {
+                throw std::runtime_error("Need to implement");
+        }
+        e = e->Sym();
+
+        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
+        std::cout << "----------"<< std::endl;
+        push_back_point2d(h, get_point(e->Org()));
+
+        do {
+                push_back_point2d(h, get_point(e->Dest()));
+                push_back_point2d(h, get_point(e->Onext()->Dest()));
+                e = e->Dnext()->Sym();
+        } while (right_of(pt, e));
+
+        for (auto& a : h) std::cout << a << " ";
+        std::cout << std::endl;
+        // h.write_txt("hull");
+
+        return h;
 }
 
 void Subdivision::write_txt(const std::string& prefix) {

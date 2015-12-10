@@ -174,6 +174,33 @@ std::ostream& operator<< (std::ostream& os, const AABB2d& bb) {
 }
 
 
+// Sort and remove duplicates from a list of points
+void sort_point2d_list(unsigned int dimen, std::list<Point2d>& point)
+{
+        typedef Point2d point_type;
+
+        // Sort
+        if (dimen == 0)
+                point.sort([](const point_type& a, const point_type& b)
+                           { if (std::abs(a[0] - b[0]) < real_eps) return a[1] < b[1];
+                                   else return a[0] < b[0]; });
+        else
+                point.sort([](const point_type& a, const point_type& b)
+                           { if (std::abs(a[1] - b[1]) < real_eps) return a[0] < b[0];
+                                   else return a[1] < b[1]; });
+
+        // Remove duplicates (has to be already sorted)
+        point.unique([](const point_type& a, const point_type& b)
+                     { return (std::abs(a[0] - b[0]) < real_eps) &&
+                                     (std::abs(a[1] - b[1]) < real_eps); });
+}
+
+void push_back_point2d(std::vector<real>& v, const Point2d& p)
+{
+        for (unsigned int d=0; d<Point2d::dim; d++) v.push_back(p[d]);
+}
+
+
 // Returns twice the area of the oriented triangle (a, b, c), i.e., the
 // area is positive if the triangle is oriented counterclockwise.
 real tri_area(const Point2d& a, const Point2d& b, const Point2d& c)

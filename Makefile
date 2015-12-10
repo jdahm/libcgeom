@@ -9,7 +9,7 @@ tests =
 	$(MPICXX) $(CF) -MMD -c $< -o $@
 
 # Base source
-cgl_base=cgl/geom2d.o cgl/quad_edge.o cgl/point_set.o cgl/subdivision.o cgl/triangulation.o
+cgl_base=cgl/geom2d.o cgl/quad_edge.o cgl/point_set.o cgl/subdivision.o cgl/triangulation.o cgl/load_balance.o
 -include $(cgl_base:.o=.d)
 
 par_base=par/communicator.o par/environment.o par/status.o
@@ -32,7 +32,7 @@ quad_edge_test: cgl/quad_edge_test.o cgl/quad_edge.o cgl/geom2d.o
 -include cgl/quad_edge_test.d
 
 tests += point_set_test
-point_set_test: cgl/point_set_test.o cgl/point_set.o cgl/geom2d.o $(par_base)
+point_set_test: cgl/point_set_test.o cgl/point_set.o cgl/geom2d.o cgl/load_balance.o $(par_base)
 	$(MPICXX) $^ -o $@ $(LDFLAGS)
 -include cgl/point_set_test.d
 
@@ -42,7 +42,7 @@ subdivision_test: cgl/subdivision_test.o cgl/subdivision.o cgl/geom2d.o cgl/quad
 -include cgl/subdivision_test.d
 
 tests += triangulation_test
-triangulation_test: cgl/triangulation_test.o cgl/triangulation.o cgl/subdivision.o cgl/point_set.o cgl/geom2d.o cgl/quad_edge.o $(par_base)
+triangulation_test: cgl/triangulation_test.o cgl/triangulation.o cgl/subdivision.o cgl/point_set.o cgl/geom2d.o cgl/quad_edge.o cgl/load_balance.o $(par_base)
 	$(MPICXX) $^ -o $@ $(LDFLAGS)
 -include cgl/triangulation_test.d
 

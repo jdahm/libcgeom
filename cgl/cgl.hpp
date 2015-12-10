@@ -16,8 +16,6 @@ static constexpr real real_eps = std::numeric_limits<real>::epsilon();
 
 static constexpr MPI_Datatype mpi_real = par::mpi_datatype<real>::type;
 
-enum class ProcTopology {Line, NestedGrid, RCB, RIB};
-
 }
 
 #endif

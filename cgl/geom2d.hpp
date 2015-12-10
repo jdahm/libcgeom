@@ -8,6 +8,8 @@
 
 #include <iostream>
 #include <array>
+#include <list>
+#include <vector>
 
 #include "cgl/cgl.hpp"
 
@@ -85,6 +87,9 @@ public:
         friend std::ostream& operator<< (std::ostream&, const AABB2d&);
 };
 
+void sort_point2d_list(unsigned int, std::list<Point2d>&);
+
+void push_back_point2d(std::vector<real>& v, const Point2d& p);
 
 real tri_area(const Point2d&, const Point2d&, const Point2d&);
 

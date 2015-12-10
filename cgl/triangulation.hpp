@@ -1,6 +1,9 @@
 #ifndef CGL_TRIANGULATION_HPP
 #define CGL_TRIANGULATION_HPP
 
+#include <list>
+#include <utility> // for std::pair
+#include <vector>
 #include <stack>
 
 #include "cgl/geom2d.hpp"
@@ -10,9 +13,30 @@
 namespace cgl
 {
 
-struct MergeInfo {
+class Hull {
+public:
+        typedef Point2d point_type;
+        typedef std::pair<point_type, point_type> data_type;
+        typedef std::list<data_type> container_type;
+        typedef typename container_type::iterator iterator;
+
+        Hull(std::vector<real> raw);
+
+        void swap_new(iterator it, std::vector<real> raw);
+
+        iterator begin();
+
+        const point_type& org() const;
+
+private:
+        point_type base;
+        container_type hlist;
+};
+
+
+struct Neighbor {
         int neighbor;
-        Direction neighbor_dir;
+        Direction dir;
 };
 
 class Triangulation : public Subdivision {
@@ -25,15 +49,21 @@ public:
         Delaunay(PointSet&);
 
 private:
-        void create_merge_stack();
-
-        void merge(edge_type&, const edge_type&, const edge_type&, edge_type&);
-
+        // Divide and conquer
         void init_dc(PointSet&, edge_type&, edge_type&, int);
 
-        void proc_merge(unsigned int, Direction, edge_type&);
+        // Create a stack of merges that have to occur
+        void create_merge_stack();
 
-        std::stack<MergeInfo> merge_stack;
+        // Merge within the processor
+        void merge(edge_type&, const edge_type&, const edge_type&, edge_type&);
+
+        // Merge with another processor
+        void merge_proc(unsigned int, Direction, edge_type&, edge_type&);
+        void merge_hull(edge_type&, const edge_type&, Hull&);
+        void merge_hull(Hull&, const edge_type&, edge_type&);
+
+        std::stack< std::vector<Neighbor> > merge_stack;
         AABB2d bounding_box;
 };
 
