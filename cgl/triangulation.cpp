@@ -61,8 +61,6 @@ Delaunay::Delaunay(PointSet& ps) {
         // Sort the points again in the x-direction
         ps.sort(0);
 
-        std::cout << ps.size() << std::endl;
-
         // Create merge stack (recursiveness happens here)
         create_merge_stack();
 
@@ -70,19 +68,18 @@ Delaunay::Delaunay(PointSet& ps) {
         edge_type el, er;
         init_dc(ps, el, er, 0);
 
-        // // Compute global ids (used in the processor merges below)
-        // fill_global_ids();
-
+        return;
+        const par::communicator& comm = par::comm_world();
         while (!merge_stack.empty()) {
                 // Get the next element
-                for (const Neighbor& n : merge_stack.top()) {
-                        if (n.dir == Direction::Left)
-                                merge_proc(n.neighbor, n.dir, er, el);
-                        else if (n.dir == Direction::Right)
-                                merge_proc(n.neighbor, n.dir, el, er);
-                        else
-                                throw std::runtime_error("Cannot merge this direction");
-                }
+                const Neighbor& n = merge_stack.top();
+                std::cout << "rank = " << comm.rank() << " neighbor = " << n.neighbor << " dir = " << static_cast<int>(n.dir) << std::endl;
+                if (n.dir == Direction::Left)
+                        merge_proc(comm, n.neighbor, n.dir, er, el);
+                else if (n.dir == Direction::Right)
+                        merge_proc(comm, n.neighbor, n.dir, el, er);
+                else
+                        throw std::runtime_error("Cannot merge this direction");
                 // Remove the merge info element
                 merge_stack.pop();
         }
@@ -289,8 +286,7 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                         std::cout << "new basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         ++hit;
 #ifndef NDEBUG
-                        if (hit == h.end())
-                                throw std::runtime_error("Prematurely hit end if hull");
+                        if (hit == h.end()) comm.abort("Prematurely hit end of hull", 1);
 #endif
                 }
                 else {
@@ -388,8 +384,7 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                         std::cout << "new basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         ++hit;
 #ifndef NDEBUG
-                        if (hit == h.end())
-                                throw std::runtime_error("Prematurely hit end if hull");
+                        if (hit == h.end()) comm.abort("Prematurely hit end of hull", 1);
 #endif
                 }
         } // Merge loop
@@ -407,42 +402,35 @@ void Delaunay::create_merge_stack()
 
         if (num_proc == 1) return;
 
-        merge_stack.push(std::vector<Neighbor>());
-
         if (my_rank % 2) {
                 const int neighbor = my_rank - 1;
                 if (neighbor >= 0)
-                        merge_stack.top().emplace_back(Neighbor({neighbor, Direction::Left}));
+                        merge_stack.emplace(Neighbor({neighbor, Direction::Left}));
         }
         else {
                 const int neighbor = my_rank + 1;
                 if (neighbor < num_proc)
-                        merge_stack.top().emplace_back(Neighbor({neighbor, Direction::Right}));
+                        merge_stack.emplace(Neighbor({neighbor, Direction::Right}));
         }
 
         if (num_proc == 2) return;
 
-        merge_stack.push(std::vector<Neighbor>());
         if (my_rank % 2) {
                 const int neighbor = my_rank + 1;
                 if (neighbor < num_proc)
-                        merge_stack.top().emplace_back(Neighbor({neighbor, Direction::Right}));
+                        merge_stack.emplace(Neighbor({neighbor, Direction::Right}));
         }
         else {
                 const int neighbor = my_rank - 1;
                 if (neighbor >= 0)
-                        merge_stack.top().emplace_back(Neighbor({neighbor, Direction::Left}));
+                        merge_stack.emplace(Neighbor({neighbor, Direction::Left}));
         }
 }
 
-void Delaunay::merge_proc(unsigned int neighbor, Direction dir, edge_type& eo, edge_type& ei)
+void Delaunay::merge_proc(const par::communicator& comm, unsigned int neighbor,
+                          Direction dir, edge_type& eo, edge_type& ei)
 {
-        // LIMITATION: This can only merge convex regions that are bounded "well" by an AABB2d
-
-        const par::communicator& comm = par::comm_world();
-
-        // // Determine a bounding point outside the AABB2d
-        // point_type p = bounding_box.bounding_point(dir);
+        // LIMITATION: This can only merge convex regions
 
         // ei seem to be CW when ei takes the rdi and CCW when ei takes the
         // place of ldi. While this is fine, it's easier to extract the hull and
@@ -451,10 +439,13 @@ void Delaunay::merge_proc(unsigned int neighbor, Direction dir, edge_type& eo, e
         std::cout << "before flip = " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
         ei = ei->Sym();
 
-        // Create a subdivision of the part of the convex hull facing the neighbor
+        // Create a subdivision of the part of the convex hull facing the
+        // neighbor. Note that the extract_*_hull functions require that the
+        // edge on the left is CCW and CW on the right
         std::vector<real> myhull;
         if (dir == Direction::Left)  myhull = extract_left_hull(ei);
-        if (dir == Direction::Right) myhull = extract_right_hull(ei);
+        else if (dir == Direction::Right) myhull = extract_right_hull(ei);
+        else comm.abort("Unknown merge direction", 1);
 
         const std::vector<real>::size_type myhullsize = myhull.size();
         comm.isend(&myhullsize, neighbor);
@@ -464,7 +455,7 @@ void Delaunay::merge_proc(unsigned int neighbor, Direction dir, edge_type& eo, e
                 par::request rr = comm.irecv(&hullsize, neighbor);
                 rr.wait();
         }
-        std::cout << "hullsize = " << hullsize << std::endl;
+
         // Next, send the hull
         std::vector<real> hull(hullsize);
         comm.isend(myhull.data(), neighbor, myhullsize);
@@ -476,15 +467,14 @@ void Delaunay::merge_proc(unsigned int neighbor, Direction dir, edge_type& eo, e
         for (auto& p : hull) std::cout << p << " ";
         std::cout << std::endl;
 
+        std::cout << "going in = " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
         Hull h(hull);
-        if (dir == Direction::Right) {
-                std::cout << "going in " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
+        if (dir == Direction::Right)
                 merge_hull(comm, neighbor, eo, ei, h);
-        }
-        else if (dir == Direction::Left) {
-                std::cout << "going in " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
+        else if (dir == Direction::Left)
                 merge_hull(comm, neighbor, h, ei, eo);
-        }
+        else
+                comm.abort("Unknown merge direction", 1);
 }
 
 

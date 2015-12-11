@@ -63,11 +63,15 @@ private:
         void merge(edge_type&, const edge_type&, const edge_type&, edge_type&);
 
         // Merge with another processor
-        void merge_proc(unsigned int, Direction, edge_type&, edge_type&);
-        void merge_hull(const par::communicator&, unsigned int, edge_type&, const edge_type&, Hull&);
-        void merge_hull(const par::communicator&, unsigned int, Hull&, const edge_type&, edge_type&);
+        void merge_proc(const par::communicator&, unsigned int,
+                        Direction, edge_type&, edge_type&);
+        // Calls either of these
+        void merge_hull(const par::communicator&, unsigned int,
+                        edge_type&, const edge_type&, Hull&);
+        void merge_hull(const par::communicator&, unsigned int,
+                        Hull&, const edge_type&, edge_type&);
 
-        std::stack< std::vector<Neighbor> > merge_stack;
+        std::stack<Neighbor> merge_stack;
 };
 
 } // namespace cgl
