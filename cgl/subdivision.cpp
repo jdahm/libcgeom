@@ -310,69 +310,97 @@ Subdivision Subdivision::extract_entire_hull(edge_type e, const point_type& pt) 
         return hull;
 }
 
-std::vector<real> Subdivision::extract_left_hull(edge_type e, const point_type& pt) const
+static bool correct_face(const Subdivision::point_type& org,
+                         const Subdivision::point_type& dest)
 {
-        // e must be oriented ccw around the convex hull
+        // Returns true if the face is oriented CW and is facing left or CCW and is facing right
+        Subdivision::point_type t = dest - org;
+        return t[1] > 0;
+}
+
+std::vector<real> Subdivision::extract_left_hull(edge_type& e) const
+{
+        // Here the edge is oriented cw
         std::vector<real> h;
 
         std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
-        std::cout << "START" << std::endl;
-        // Get to the beginning of the part of the hull to extract
-        e = e->Sym();
-        if (left_of(pt, e)) {
-                throw std::runtime_error("Need to implement");
+        if (correct_face(get_point(e->Org()), get_point(e->Dest()))) {
+                // Backup until not facing
+                while (correct_face(get_point(e->Org()), get_point(e->Dest()))) {
+                        e = e->Lprev();
+                        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
+                }
         }
         else {
-                while (right_of(pt, e)) e = e->Dprev()->Sym();
+                while (!correct_face(get_point(e->Lnext()->Org()), get_point(e->Lnext()->Dest())))
+                        e = e->Lnext();
+                std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
         }
+
+        const edge_type estart = e->Lnext();
+
         std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
-        std::cout << "----------"<< std::endl;
-        push_back_point2d(h, get_point(e->Org()));
+        std::cout << "START" << std::endl;
+        push_back_point2d(h, get_point(e->Dest()));
 
         do {
+                e = e->Lnext();
                 push_back_point2d(h, get_point(e->Dest()));
                 push_back_point2d(h, get_point(e->Oprev()->Dest()));
-                e = e->Dprev()->Sym();
-        } while (left_of(pt, e));
+        } while (correct_face(get_point(e->Org()), get_point(e->Dest())));
 
         for (auto& a : h) std::cout << a << " ";
         std::cout << std::endl;
         // h.write_txt("hull");
 
+        // Reset edge
+        e = estart;
+
         return h;
 }
 
-std::vector<real> Subdivision::extract_right_hull(edge_type e, const point_type& pt) const
+std::vector<real> Subdivision::extract_right_hull(edge_type& e) const
 {
-        // e must be oriented ccw around the convex hull
+        // Here the edge is oriented cw
         std::vector<real> h;
+
         std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
-        std::cout << "START" << std::endl;
-        // Get to the beginning of the part of the hull to extract
-        if (left_of(pt, e)) {
-                while (left_of(pt, e->Dprev()->Sym())) e = e->Dprev()->Sym();
+        if (correct_face(get_point(e->Org()), get_point(e->Dest()))) {
+                // Backup until not facing
+                while (correct_face(get_point(e->Org()), get_point(e->Dest()))) {
+                        e = e->Rnext();
+                        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
+                }
         }
         else {
-                throw std::runtime_error("Need to implement");
+                while (!correct_face(get_point(e->Rprev()->Org()), get_point(e->Rprev()->Dest()))) {
+                        e = e->Rprev();
+                        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
+                }
         }
-        e = e->Sym();
+
+        const edge_type estart = e->Rprev();
 
         std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
-        std::cout << "----------"<< std::endl;
-        push_back_point2d(h, get_point(e->Org()));
+        std::cout << "START" << std::endl;
+        push_back_point2d(h, get_point(e->Dest()));
 
         do {
+                e = e->Rprev();
                 push_back_point2d(h, get_point(e->Dest()));
                 push_back_point2d(h, get_point(e->Onext()->Dest()));
-                e = e->Dnext()->Sym();
-        } while (right_of(pt, e));
+        } while (correct_face(get_point(e->Org()), get_point(e->Dest())));
 
         for (auto& a : h) std::cout << a << " ";
         std::cout << std::endl;
         // h.write_txt("hull");
 
+        // Reset edge
+        e = estart->Rnext()->Sym();
+
         return h;
 }
+
 
 void Subdivision::write_txt(const std::string& prefix) {
         const par::communicator& comm_world = par::comm_world();

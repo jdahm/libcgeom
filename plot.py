@@ -63,13 +63,19 @@ def plot_partition1d(prefix, partition, delim=' ', ext='txt', point_style='k.', 
         plt.plot([bound, bound], [ymin, ymax], line_style)
     return p
 
-def plot_partitioned_points(prefix, delim=' ', ext='txt', point_styles=('bs', 'r^', 'gv', 'cx'), **kwargs):
+
+def plot_points(filename, delim=' ', point_style='b.', **kwargs):
     p = plt.figure()
-    for i, f in enumerate(glob(prefix+"_*."+ext)):
-        point = read_points(f, delim=delim)
-        plt.plot(point[:,0], point[:,1], point_styles[i])
+    point = read_points(filename, delim=delim)
+    plt.plot(point[:,0], point[:,1], point_style)
     if 'xlim' in kwargs:
         plt.xlim(kwargs['xlim'])
     if 'ylim' in kwargs:
         plt.xlim(kwargs['ylim'])
+    return p
+
+def plot_partitioned_points(prefix, delim=' ', ext='txt', point_styles=('bs', 'r^', 'gv', 'cx'), **kwargs):
+    p = plt.figure()
+    for i, f in enumerate(glob(prefix+"_*."+ext)):
+        plot_points(f, delim=delim, point_style=point_styles[i], **kwargs)
     return p

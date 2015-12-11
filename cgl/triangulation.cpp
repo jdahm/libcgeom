@@ -32,6 +32,9 @@ void Hull::swap_new(iterator it, std::vector<real> raw)
 }
 
 Hull::iterator Hull::begin() { return hlist.begin(); }
+Hull::iterator Hull::end() { return hlist.end(); }
+Hull::reverse_iterator Hull::rbegin() { return hlist.rbegin(); }
+Hull::reverse_iterator Hull::rend() { return hlist.rend(); }
 
 const Hull::point_type& Hull::org() const { return base; }
 
@@ -47,7 +50,7 @@ void Triangulation::swap(const edge_type& e)
         e->set_id(a->Dest(), b->Dest());
 }
 
-Delaunay::Delaunay(PointSet& ps) : bounding_box(ps.front()) {
+Delaunay::Delaunay(PointSet& ps) {
         if (ps.size() == 1) throw std::runtime_error("Need more than one point.");
 
         // Sort the points again in the x-direction
@@ -57,9 +60,6 @@ Delaunay::Delaunay(PointSet& ps) : bounding_box(ps.front()) {
 
         // Create merge stack (recursiveness happens here)
         create_merge_stack();
-
-        // Loop to add points to the bounding box
-        for (const point_type& p : ps) bounding_box.add_point(p);
 
         // Delaunay the processor portion
         edge_type el, er;
@@ -188,6 +188,9 @@ void Delaunay::init_dc(PointSet& ps, edge_type& el, edge_type& er, int i)
                 init_dc(ps, ldo, ldi, i + 1);
                 init_dc(psr, rdi, rdo, i + 1);
 
+                std::cout << "Before traverse" << std::endl;
+                std::cout << get_point(ldi->Org()) << "," << get_point(ldi->Dest()) << std::endl;
+                std::cout << get_point(rdi->Org()) << "," << get_point(rdi->Dest()) << std::endl;
                 // Traverse the convex hulls of left and right point sets in preparation
                 // to compute the base tangent
                 while (true) {
@@ -195,6 +198,9 @@ void Delaunay::init_dc(PointSet& ps, edge_type& el, edge_type& er, int i)
                         else if (right_of(ldi->Org(), rdi)) rdi = rdi->Rprev();
                         else break;
                 }
+                std::cout << "After traverse" << std::endl;
+                std::cout << get_point(ldi->Org()) << "," << get_point(ldi->Dest()) << std::endl;
+                std::cout << get_point(rdi->Org()) << "," << get_point(rdi->Dest()) << std::endl;
 
                 // Merge the two triangulations
                 merge(ldo, ldi, rdi, rdo);
@@ -282,7 +288,7 @@ void Delaunay::merge_hull(Hull& h, const edge_type& rdi, edge_type& rdo)
 {
         Hull::iterator hit = h.begin();
 
-        edge_type basel = extend_edge(rdi->Lprev(), h.org());
+        edge_type basel = extend_edge(rdi->Sym(), h.org());
         std::cout << get_point(basel->Org()) << " " << get_point(basel->Dest()) << std::endl;
         std::cout << get_point(basel->Oprev()->Org()) << " " << get_point(basel->Oprev()->Dest()) << std::endl;
         std::cout << get_point(basel->Dnext()->Sym()->Org()) << " " << get_point(basel->Dnext()->Sym()->Dest()) << std::endl;
@@ -403,13 +409,20 @@ void Delaunay::merge_proc(unsigned int neighbor, Direction dir, edge_type& eo, e
 
         const par::communicator& comm = par::comm_world();
 
-        // Determine a bounding point outside the AABB2d
-        point_type p = bounding_box.bounding_point(dir);
+        // // Determine a bounding point outside the AABB2d
+        // point_type p = bounding_box.bounding_point(dir);
+
+        // ei seem to be CW when ei takes the rdi and CCW when ei takes the
+        // place of ldi. While this is fine, it's easier to extract the hull and
+        // do the merge if the face is exactly opposite. Inside the merge the
+        // edges are flipped anyway before any merge occurs. Flip it here instead.
+        std::cout << "before flip = " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
+        ei = ei->Sym();
 
         // Create a subdivision of the part of the convex hull facing the neighbor
         std::vector<real> myhull;
-        if (dir == Direction::Left)  myhull = extract_left_hull(ei, p);
-        if (dir == Direction::Right) myhull = extract_right_hull(ei, p);
+        if (dir == Direction::Left)  myhull = extract_left_hull(ei);
+        if (dir == Direction::Right) myhull = extract_right_hull(ei);
 
         const std::vector<real>::size_type myhullsize = myhull.size();
         comm.isend(&myhullsize, neighbor);
@@ -439,8 +452,11 @@ void Delaunay::merge_proc(unsigned int neighbor, Direction dir, edge_type& eo, e
 
         Hull h(hull);
         if (dir == Direction::Right) {
-                std::cout << "going in " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
-                while (left_of(h.org(), ei)) ei = ei->Lnext();
+                // std::cout << "going in " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
+                // for (Hull::reverse_iterator it=h.rbegin(); it!=h.rend(); ++it) {
+                //         while (left_of(it->first, ei)) ei = ei->Lnext();
+                // }
+                // while (left_of(h.org(), ei)) ei = ei->Lnext();
 
                 std::cout << "going in " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
                 merge_hull(eo, ei, h);
@@ -452,8 +468,12 @@ void Delaunay::merge_proc(unsigned int neighbor, Direction dir, edge_type& eo, e
                 // else {
                 //         std::cout << static_cast<int>(left_of(h.org(), ei)) << std::endl;
                 //         std::cout << static_cast<int>(right_of(h.org(), ei)) << std::endl;
-                        while (left_of(h.org(), ei)) ei = ei->Rprev();
+                // for (Hull::reverse_iterator it=h.rbegin(); it!=h.rend(); ++it) {
+                //         while (right_of(it->first, ei)) ei = ei->Rprev();
                 // }
+                // while (right_of(h.org(), ei)) ei = ei->Rprev();
+                // ei = ei->Sym();
+                        // }
 
                 std::cout << "going in " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
                 merge_hull(h, ei, eo);

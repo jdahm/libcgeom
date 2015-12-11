@@ -18,6 +18,7 @@ public:
         typedef Point2d point_type;
         typedef std::pair<point_type, point_type> data_type;
         typedef std::list<data_type> container_type;
+        typedef typename container_type::reverse_iterator reverse_iterator;
         typedef typename container_type::iterator iterator;
 
         Hull(std::vector<real> raw);
@@ -25,6 +26,9 @@ public:
         void swap_new(iterator it, std::vector<real> raw);
 
         iterator begin();
+        iterator end();
+        reverse_iterator rbegin();
+        reverse_iterator rend();
 
         const point_type& org() const;
 
@@ -64,7 +68,6 @@ private:
         void merge_hull(Hull&, const edge_type&, edge_type&);
 
         std::stack< std::vector<Neighbor> > merge_stack;
-        AABB2d bounding_box;
 };
 
 } // namespace cgl
