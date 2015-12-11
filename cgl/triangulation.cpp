@@ -56,24 +56,41 @@ void Triangulation::swap(const edge_type& e)
 }
 
 Delaunay::Delaunay(PointSet& ps) {
+        const par::communicator& comm = par::comm_world();
+
         if (ps.size() == 1) throw std::runtime_error("Need more than one point.");
+
+        const real sstart = par::wtime();
 
         // Sort the points again in the x-direction
         ps.sort(0);
 
-        // Create merge stack (recursiveness happens here)
-        create_merge_stack();
+        comm.barrier();
+        const real send = par::wtime();
+
+        if (comm.rank() == 0)
+                std::cout << "Sort time = " << send - sstart << std::endl;
+
+        const real sdsstart = par::wtime();
 
         // Delaunay the processor portion
         edge_type el, er;
         init_dc(ps, el, er, 0);
 
-        return;
-        const par::communicator& comm = par::comm_world();
+        comm.barrier();
+        const real sdsend = par::wtime();
+        if (comm.rank() == 0)
+                std::cout << "SelfDT time = " << sdsend - sdsstart << std::endl;
+
+        const real ndsstart = par::wtime();
+
+        // Create merge stack
+        create_merge_stack(comm);
+
+        // return;
         while (!merge_stack.empty()) {
                 // Get the next element
                 const Neighbor& n = merge_stack.top();
-                std::cout << "rank = " << comm.rank() << " neighbor = " << n.neighbor << " dir = " << static_cast<int>(n.dir) << std::endl;
                 if (n.dir == Direction::Left)
                         merge_proc(comm, n.neighbor, n.dir, er, el);
                 else if (n.dir == Direction::Right)
@@ -83,6 +100,11 @@ Delaunay::Delaunay(PointSet& ps) {
                 // Remove the merge info element
                 merge_stack.pop();
         }
+
+        comm.barrier();
+        const real ndsend = par::wtime();
+        if (comm.rank() == 0)
+                std::cout << "ParDT time = " << ndsend - ndsstart << std::endl;
 }
 
 
@@ -190,9 +212,6 @@ void Delaunay::init_dc(PointSet& ps, edge_type& el, edge_type& er, int i)
                 init_dc(ps, ldo, ldi, i + 1);
                 init_dc(psr, rdi, rdo, i + 1);
 
-                std::cout << "Before traverse" << std::endl;
-                std::cout << get_point(ldi->Org()) << "," << get_point(ldi->Dest()) << std::endl;
-                std::cout << get_point(rdi->Org()) << "," << get_point(rdi->Dest()) << std::endl;
                 // Traverse the convex hulls of left and right point sets in preparation
                 // to compute the base tangent
                 while (true) {
@@ -200,9 +219,6 @@ void Delaunay::init_dc(PointSet& ps, edge_type& el, edge_type& er, int i)
                         else if (right_of(ldi->Org(), rdi)) rdi = rdi->Rprev();
                         else break;
                 }
-                std::cout << "After traverse" << std::endl;
-                std::cout << get_point(ldi->Org()) << "," << get_point(ldi->Dest()) << std::endl;
-                std::cout << get_point(rdi->Org()) << "," << get_point(rdi->Dest()) << std::endl;
 
                 // Merge the two triangulations
                 merge(ldo, ldi, rdi, rdo);
@@ -218,9 +234,6 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
 {
         Hull::iterator hit = h.begin();
         edge_type basel = extend_edge(ldi->Sym(), h.org())->Sym();
-        std::cout << get_point(basel->Org()) << " " << get_point(basel->Dest()) << std::endl;
-        std::cout << get_point(basel->Oprev()->Org()) << " " << get_point(basel->Oprev()->Dest()) << std::endl;
-        std::cout << get_point(basel->Dnext()->Sym()->Org()) << " " << get_point(basel->Dnext()->Sym()->Dest()) << std::endl;
 
         // Keep this here for old times' sake
         if (ldi->Org() == ldo->Org()) ldo = basel->Sym();
@@ -239,8 +252,8 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                                 push_back_point2d(trans, get_point(lcand->Dprev()->Org()));
                                 push_back_point2d(trans, get_point(lcand->Dnext()->Dnext()->Org()));
                                 comm.send(trans.data(), neighbor, 2 * point_type::dim);
-                                for (auto& a : trans) std::cout << a << " ";
-                                std::cout << std::endl;
+                                // for (auto& a : trans) std::cout << a << " ";
+                                // std::cout << std::endl;
                                 // throw std::runtime_error("Need to transfer here");
                         }
 
@@ -253,8 +266,8 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                                          hit->second)) {
                                 std::vector<real> trans(4);
                                 comm.recv(trans.data(), neighbor, 2 * point_type::dim);
-                                for (auto& a : trans) std::cout << a << " ";
-                                std::cout << std::endl;
+                                // for (auto& a : trans) std::cout << a << " ";
+                                // std::cout << std::endl;
                                 hit = h.swap(hit, trans);
                                 // throw std::runtime_error("Need to receive here");
                         }
@@ -263,10 +276,6 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                 // common tangent
                 if (!right_of(lcand->Dest(), basel) &&
                     !right_of(hit->first, basel)) break;
-
-                std::cout << static_cast<int>(!right_of(lcand->Dest(), basel)) << " || "  << static_cast<int>(right_of(hit->first, basel)) << " && " << static_cast<int>(in_circle(get_point(lcand->Dest()), get_point(lcand->Org()), get_point(basel->Org()), hit->first)) << std::endl;
-                std::cout << get_point(lcand->Dest()) << "," << get_point(lcand->Org()) << "," << get_point(basel->Org()) << "," << hit->first << std::endl;
-                std::cout << "lcand here = " << get_point(lcand->Org()) << "," << get_point(lcand->Dest()) << std::endl;
 
                 // The next cross edge is to be connected to either lcand.Dest
                 // or rcand.Dest If both are valid, then choose the appropriate
@@ -280,10 +289,7 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                              hit->first))) {
                         // Add cross edge basel from rcand.Dest to basel.Dest
                         edge_type rcand = extend_edge(basel->Sym(), hit->first);
-                        std::cout << "rcand = " << get_point(rcand->Org()) << "," << get_point(rcand->Dest()) << std::endl;
-                        std::cout << "basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         basel = connect_edges(rcand, basel->Sym());
-                        std::cout << "new basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         ++hit;
 #ifndef NDEBUG
                         if (hit == h.end()) comm.abort("Prematurely hit end of hull", 1);
@@ -291,10 +297,7 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                 }
                 else {
                         // Add cross edge basel from basel.Org to lcand.Dest
-                        std::cout << "lcand = " << get_point(lcand->Org()) << "," << get_point(lcand->Dest()) << std::endl;
-                        std::cout << "basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         basel = connect_edges(basel->Sym(), lcand->Sym());
-                        std::cout << "new basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                 }
 
         } // Merge loop
@@ -306,9 +309,6 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
         Hull::iterator hit = h.begin();
 
         edge_type basel = extend_edge(rdi->Sym(), h.org());
-        std::cout << get_point(basel->Org()) << " " << get_point(basel->Dest()) << std::endl;
-        std::cout << get_point(basel->Oprev()->Org()) << " " << get_point(basel->Oprev()->Dest()) << std::endl;
-        std::cout << get_point(basel->Dnext()->Sym()->Org()) << " " << get_point(basel->Dnext()->Sym()->Dest()) << std::endl;
 
         // Keep this here for old times' sake
         if (rdi->Org() == rdo->Org()) rdo = basel;
@@ -325,8 +325,8 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                                          hit->second)) {
                                 std::vector<real> trans(4);
                                 comm.recv(trans.data(), neighbor, 4);
-                                for (auto& a : trans) std::cout << a << " ";
-                                std::cout << std::endl;
+                                // for (auto& a : trans) std::cout << a << " ";
+                                // std::cout << std::endl;
                                 hit = h.swap(hit, trans);
                                 // throw std::runtime_error("Need to receive here");
                         }
@@ -346,8 +346,8 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                                 push_back_point2d(trans, get_point(rcand->Dnext()->Org()));
                                 push_back_point2d(trans, get_point(rcand->Dprev()->Dprev()->Org()));
                                 comm.send(trans.data(), neighbor, 4);
-                                for (auto& a : trans) std::cout << a << " ";
-                                std::cout << std::endl;
+                                // for (auto& a : trans) std::cout << a << " ";
+                                // std::cout << std::endl;
                                 // throw std::runtime_error("Need to transfer here");
                         }
                 }
@@ -356,8 +356,6 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                 // common tangent
                 if (!right_of(hit->first, basel) &&
                     !right_of(rcand->Dest(), basel)) break;
-                std::cout << static_cast<int>(!right_of(hit->first, basel)) << " || "  << static_cast<int>(right_of(rcand->Dest(), basel)) << " && " << static_cast<int>(in_circle(hit->first, get_point(basel->Dest()), get_point(rcand->Org()), get_point(rcand->Dest()))) << std::endl;
-                std::cout << hit->first << "," << get_point(basel->Dest()) << "," << get_point(rcand->Org()) << "," << get_point(rcand->Dest()) << std::endl;
 
                 // The next cross edge is to be connected to either lcand.Dest
                 // or rcand.Dest If both are valid, then choose the appropriate
@@ -370,18 +368,12 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                              get_point(rcand->Org()),
                              get_point(rcand->Dest())))) {
                         // Add cross edge basel from rcand.Dest to basel.Dest
-                        std::cout << "rcand = " << get_point(rcand->Org()) << "," << get_point(rcand->Dest()) << std::endl;
-                        std::cout << "basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         basel = connect_edges(rcand, basel->Sym());
-                        std::cout << "new basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                 }
                 else {
                         // Add cross edge basel from basel.Org to lcand.Dest
                         edge_type lcand = extend_edge(basel, hit->first);
-                        std::cout << "lcand = " << get_point(lcand->Org()) << "," << get_point(lcand->Dest()) << std::endl;
-                        std::cout << "basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         basel = connect_edges(basel->Sym(), lcand->Sym());
-                        std::cout << "new basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         ++hit;
 #ifndef NDEBUG
                         if (hit == h.end()) comm.abort("Prematurely hit end of hull", 1);
@@ -391,14 +383,12 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
 }
 
 
-void Delaunay::create_merge_stack()
+void Delaunay::create_merge_stack(const par::communicator& comm)
 {
         // LIMITATION: This is very specific to a 1d merge of processors
         // in a "unary" layout
-        const par::communicator &comm_world = par::comm_world();
-
-        const int my_rank = comm_world.rank();
-        const int num_proc = comm_world.size();
+        const int my_rank = comm.rank();
+        const int num_proc = comm.size();
 
         if (num_proc == 1) return;
 
@@ -436,7 +426,6 @@ void Delaunay::merge_proc(const par::communicator& comm, unsigned int neighbor,
         // place of ldi. While this is fine, it's easier to extract the hull and
         // do the merge if the face is exactly opposite. Inside the merge the
         // edges are flipped anyway before any merge occurs. Flip it here instead.
-        std::cout << "before flip = " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
         ei = ei->Sym();
 
         // Create a subdivision of the part of the convex hull facing the
@@ -464,10 +453,6 @@ void Delaunay::merge_proc(const par::communicator& comm, unsigned int neighbor,
                 rr.wait();
         }
 
-        for (auto& p : hull) std::cout << p << " ";
-        std::cout << std::endl;
-
-        std::cout << "going in = " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
         Hull h(hull);
         if (dir == Direction::Right)
                 merge_hull(comm, neighbor, eo, ei, h);

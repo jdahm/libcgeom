@@ -313,7 +313,9 @@ Subdivision Subdivision::extract_entire_hull(edge_type e, const point_type& pt) 
 static bool correct_face(const Subdivision::point_type& org,
                          const Subdivision::point_type& dest)
 {
-        // Returns true if the face is oriented CW and is facing left or CCW and is facing right
+        // Returns true if the face is oriented CW and is facing left or CCW and
+        // is facing right. These turn out to be the same condition and the one
+        // needed.
         Subdivision::point_type t = dest - org;
         return t[1] > 0;
 }
@@ -323,24 +325,17 @@ std::vector<real> Subdivision::extract_left_hull(edge_type& e) const
         // Here the edge is oriented cw
         std::vector<real> h;
 
-        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
         if (correct_face(get_point(e->Org()), get_point(e->Dest()))) {
                 // Backup until not facing
-                while (correct_face(get_point(e->Org()), get_point(e->Dest()))) {
+                while (correct_face(get_point(e->Org()), get_point(e->Dest())))
                         e = e->Lprev();
-                        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
-                }
         }
         else {
                 while (!correct_face(get_point(e->Lnext()->Org()), get_point(e->Lnext()->Dest())))
                         e = e->Lnext();
-                std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
         }
 
         const edge_type estart = e->Lnext();
-
-        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
-        std::cout << "START" << std::endl;
         push_back_point2d(h, get_point(e->Dest()));
 
         do {
@@ -349,9 +344,9 @@ std::vector<real> Subdivision::extract_left_hull(edge_type& e) const
                 push_back_point2d(h, get_point(e->Oprev()->Dest()));
         } while (correct_face(get_point(e->Org()), get_point(e->Dest())));
 
-        for (auto& a : h) std::cout << a << " ";
-        std::cout << std::endl;
-        // h.write_txt("hull");
+        // std::cout << "Hull: ";
+        // for (auto& a : h) std::cout << a << " ";
+        // std::cout << std::endl;
 
         // Reset edge
         e = estart;
@@ -364,25 +359,17 @@ std::vector<real> Subdivision::extract_right_hull(edge_type& e) const
         // Here the edge is oriented cw
         std::vector<real> h;
 
-        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
         if (correct_face(get_point(e->Org()), get_point(e->Dest()))) {
                 // Backup until not facing
-                while (correct_face(get_point(e->Org()), get_point(e->Dest()))) {
+                while (correct_face(get_point(e->Org()), get_point(e->Dest())))
                         e = e->Rnext();
-                        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
-                }
         }
         else {
-                while (!correct_face(get_point(e->Rprev()->Org()), get_point(e->Rprev()->Dest()))) {
+                while (!correct_face(get_point(e->Rprev()->Org()), get_point(e->Rprev()->Dest())))
                         e = e->Rprev();
-                        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
-                }
         }
 
         const edge_type estart = e->Rprev();
-
-        std::cout << get_point(e->Org()) << "," << get_point(e->Dest()) << std::endl;
-        std::cout << "START" << std::endl;
         push_back_point2d(h, get_point(e->Dest()));
 
         do {
@@ -391,9 +378,9 @@ std::vector<real> Subdivision::extract_right_hull(edge_type& e) const
                 push_back_point2d(h, get_point(e->Onext()->Dest()));
         } while (correct_face(get_point(e->Org()), get_point(e->Dest())));
 
-        for (auto& a : h) std::cout << a << " ";
-        std::cout << std::endl;
-        // h.write_txt("hull");
+        // std::cout << "Hull: ";
+        // for (auto& a : h) std::cout << a << " ";
+        // std::cout << std::endl;
 
         // Reset edge
         e = estart->Rnext()->Sym();

@@ -612,7 +612,7 @@ static void lb_s2a21d(unsigned int dimen, list_type& pl)
                 lb_create_cut(comm, my_num_cut, dimen, pl, lbd);
                 lb_create_bin(comm, dimen, pl, lbd);
                 real imbalance = lb_s2a2_calculate_imbalance(lbd);
-                std::cout << "imbalance = " << imbalance << std::endl;
+                std::cout << "Imbalance = " << imbalance << std::endl;
                 my_num_cut = std::min(2 * my_num_cut, num_point - 1);
                 int at_limit = static_cast<int>(my_num_cut == num_point - 1);
                 int all_at_limit;
@@ -620,16 +620,8 @@ static void lb_s2a21d(unsigned int dimen, list_type& pl)
                 if (imbalance < 0.05 || all_at_limit) break;
         }
 
-        std::cout << "points: ";
-        for (auto& p : pl) std::cout << p << " ";
-        std::cout << std::endl;
-
         // Migrate the points
         lb_migrate_points(comm, pl, lbd);
-
-        std::cout << "points: ";
-        for (auto& p : pl) std::cout << p << " ";
-        std::cout << std::endl;
 }
 
 static void rcb1d_recurse(const par::communicator& comm, unsigned int dimen,
@@ -884,10 +876,11 @@ void balance_set(PSTopology top, LBMethod method, unsigned int dimen, list_type&
                 Zoltan_Destroy(&zz);
         }
 
+        comm.barrier();
         const double end_time = par::wtime();
 
         if (comm.rank() == 0)
-                std::cout << "Load balance time = "
+                std::cout << "LB time = "
                           << std::setprecision(6)
                           << (end_time - start_time) << std::endl;
 }

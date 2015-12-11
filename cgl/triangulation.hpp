@@ -57,7 +57,7 @@ private:
         void init_dc(PointSet&, edge_type&, edge_type&, int);
 
         // Create a stack of merges that have to occur
-        void create_merge_stack();
+        void create_merge_stack(const par::communicator&);
 
         // Merge within the processor
         void merge(edge_type&, const edge_type&, const edge_type&, edge_type&);
