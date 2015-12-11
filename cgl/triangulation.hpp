@@ -23,7 +23,7 @@ public:
 
         Hull(std::vector<real> raw);
 
-        void swap_new(iterator it, std::vector<real> raw);
+        iterator swap(iterator it, std::vector<real> raw);
 
         iterator begin();
         iterator end();
@@ -64,8 +64,8 @@ private:
 
         // Merge with another processor
         void merge_proc(unsigned int, Direction, edge_type&, edge_type&);
-        void merge_hull(edge_type&, const edge_type&, Hull&);
-        void merge_hull(Hull&, const edge_type&, edge_type&);
+        void merge_hull(const par::communicator&, unsigned int, edge_type&, const edge_type&, Hull&);
+        void merge_hull(const par::communicator&, unsigned int, Hull&, const edge_type&, edge_type&);
 
         std::stack< std::vector<Neighbor> > merge_stack;
 };

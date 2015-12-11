@@ -19,16 +19,21 @@ Hull::Hull(std::vector<real> raw) : base(point_type(raw[0], raw[1])), hlist()
         }
 }
 
-void Hull::swap_new(iterator it, std::vector<real> raw)
+Hull::iterator Hull::swap(iterator it, std::vector<real> raw)
 {
 #ifndef NDEBUG
         if (raw.size() != 4) throw std::runtime_error("Raw data has incorrect size");
 #endif
-        data_type& d = *it;
-        iterator newit = hlist.insert(++it, d);
-        d.second = point_type(raw[0], raw[1]);
-        data_type& newd = *newit;
-        newd.second = point_type(raw[2], raw[3]);
+        // Copy the current data pointed to by it, to before it
+        iterator newit = hlist.insert(it, *it);
+        // The primary point is the candidate of *it
+        newit->first = it->second;
+        // The candidate is the first point transferred
+        newit->second = point_type(raw[0], raw[1]);
+        // The candidate for the next point (under *it) is the second point transferred
+        it->second = point_type(raw[2], raw[3]);
+        // Return an iterator to the new element
+        return newit;
 }
 
 Hull::iterator Hull::begin() { return hlist.begin(); }
@@ -211,7 +216,8 @@ void Delaunay::init_dc(PointSet& ps, edge_type& el, edge_type& er, int i)
         }
 }
 
-void Delaunay::merge_hull(edge_type& ldo, const edge_type& ldi, Hull& h)
+void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
+                          edge_type& ldo, const edge_type& ldi, Hull& h)
 {
         Hull::iterator hit = h.begin();
         edge_type basel = extend_edge(ldi->Sym(), h.org())->Sym();
@@ -232,41 +238,51 @@ void Delaunay::merge_hull(edge_type& ldo, const edge_type& ldi, Hull& h)
                                 edge_type t = lcand->Onext();
                                 remove_edge(lcand);
                                 lcand = t;
-                                throw std::runtime_error("Need to transfer here");
+                                std::vector<real> trans;
+                                push_back_point2d(trans, get_point(lcand->Dprev()->Org()));
+                                push_back_point2d(trans, get_point(lcand->Dnext()->Dnext()->Org()));
+                                comm.send(trans.data(), neighbor, 2 * point_type::dim);
+                                for (auto& a : trans) std::cout << a << " ";
+                                std::cout << std::endl;
+                                // throw std::runtime_error("Need to transfer here");
                         }
 
                 // Symmetrically, locate the first R point to be hit, and delete
                 // R edges
-                const Hull::data_type& d = *hit;
-                if (right_of(d.first, basel))
+                if (right_of(hit->first, basel))
                         while (in_circle(get_point(basel->Dest()),
                                          get_point(basel->Org()),
-                                         d.first,
-                                         d.second)) {
-                                throw std::runtime_error("Need to receive here");
+                                         hit->first,
+                                         hit->second)) {
+                                std::vector<real> trans(4);
+                                comm.recv(trans.data(), neighbor, 2 * point_type::dim);
+                                for (auto& a : trans) std::cout << a << " ";
+                                std::cout << std::endl;
+                                hit = h.swap(hit, trans);
+                                // throw std::runtime_error("Need to receive here");
                         }
 
                 // If both lcand and rcand are invalid, then basel is the upper
                 // common tangent
                 if (!right_of(lcand->Dest(), basel) &&
-                    !right_of(d.first, basel)) break;
+                    !right_of(hit->first, basel)) break;
 
-                std::cout << static_cast<int>(!right_of(lcand->Dest(), basel)) << " || "  << static_cast<int>(right_of(d.first, basel)) << " && " << static_cast<int>(in_circle(get_point(lcand->Dest()), get_point(lcand->Org()), get_point(basel->Org()), d.first)) << std::endl;
-                std::cout << get_point(lcand->Dest()) << "," << get_point(lcand->Org()) << "," << get_point(basel->Org()) << "," << d.first << std::endl;
+                std::cout << static_cast<int>(!right_of(lcand->Dest(), basel)) << " || "  << static_cast<int>(right_of(hit->first, basel)) << " && " << static_cast<int>(in_circle(get_point(lcand->Dest()), get_point(lcand->Org()), get_point(basel->Org()), hit->first)) << std::endl;
+                std::cout << get_point(lcand->Dest()) << "," << get_point(lcand->Org()) << "," << get_point(basel->Org()) << "," << hit->first << std::endl;
                 std::cout << "lcand here = " << get_point(lcand->Org()) << "," << get_point(lcand->Dest()) << std::endl;
 
                 // The next cross edge is to be connected to either lcand.Dest
                 // or rcand.Dest If both are valid, then choose the appropriate
                 // one using the in_circle test.
                 if (!right_of(lcand->Dest(), basel) ||
-                    (right_of(d.first, basel) &&
+                    (right_of(hit->first, basel) &&
                      in_circle(
                              get_point(lcand->Dest()),
                              get_point(lcand->Org()),
                              get_point(basel->Org()),
-                             d.first))) {
+                             hit->first))) {
                         // Add cross edge basel from rcand.Dest to basel.Dest
-                        edge_type rcand = extend_edge(basel->Sym(), d.first);
+                        edge_type rcand = extend_edge(basel->Sym(), hit->first);
                         std::cout << "rcand = " << get_point(rcand->Org()) << "," << get_point(rcand->Dest()) << std::endl;
                         std::cout << "basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         basel = connect_edges(rcand, basel->Sym());
@@ -288,7 +304,8 @@ void Delaunay::merge_hull(edge_type& ldo, const edge_type& ldi, Hull& h)
         } // Merge loop
 }
 
-void Delaunay::merge_hull(Hull& h, const edge_type& rdi, edge_type& rdo)
+void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
+                          Hull& h, const edge_type& rdi, edge_type& rdo)
 {
         Hull::iterator hit = h.begin();
 
@@ -305,13 +322,17 @@ void Delaunay::merge_hull(Hull& h, const edge_type& rdi, edge_type& rdo)
                 // Locate the first L point (lcand.Dest) to be encountered by
                 // the rising bubble, and delete L edges out of basel.Dest that
                 // fail the circle test.
-                const Hull::data_type& d = *hit;
-                if (right_of(d.first, basel))
+                if (right_of(hit->first, basel))
                         while (in_circle(get_point(basel->Dest()),
                                          get_point(basel->Org()),
-                                         d.first,
-                                         d.second)) {
-                                throw std::runtime_error("Need to receive here");
+                                         hit->first,
+                                         hit->second)) {
+                                std::vector<real> trans(4);
+                                comm.recv(trans.data(), neighbor, 4);
+                                for (auto& a : trans) std::cout << a << " ";
+                                std::cout << std::endl;
+                                hit = h.swap(hit, trans);
+                                // throw std::runtime_error("Need to receive here");
                         }
 
                 // Symmetrically, locate the first R point to be hit, and delete
@@ -325,24 +346,30 @@ void Delaunay::merge_hull(Hull& h, const edge_type& rdi, edge_type& rdo)
                                 edge_type t = rcand->Oprev();
                                 remove_edge(rcand);
                                 rcand = t;
-                                throw std::runtime_error("Need to transfer here");
+                                std::vector<real> trans;
+                                push_back_point2d(trans, get_point(rcand->Dnext()->Org()));
+                                push_back_point2d(trans, get_point(rcand->Dprev()->Dprev()->Org()));
+                                comm.send(trans.data(), neighbor, 4);
+                                for (auto& a : trans) std::cout << a << " ";
+                                std::cout << std::endl;
+                                // throw std::runtime_error("Need to transfer here");
                         }
                 }
 
                 // If both lcand and rcand are invalid, then basel is the upper
                 // common tangent
-                if (!right_of(d.first, basel) &&
+                if (!right_of(hit->first, basel) &&
                     !right_of(rcand->Dest(), basel)) break;
-                std::cout << static_cast<int>(!right_of(d.first, basel)) << " || "  << static_cast<int>(right_of(rcand->Dest(), basel)) << " && " << static_cast<int>(in_circle(d.first, get_point(basel->Dest()), get_point(rcand->Org()), get_point(rcand->Dest()))) << std::endl;
-                std::cout << d.first << "," << get_point(basel->Dest()) << "," << get_point(rcand->Org()) << "," << get_point(rcand->Dest()) << std::endl;
+                std::cout << static_cast<int>(!right_of(hit->first, basel)) << " || "  << static_cast<int>(right_of(rcand->Dest(), basel)) << " && " << static_cast<int>(in_circle(hit->first, get_point(basel->Dest()), get_point(rcand->Org()), get_point(rcand->Dest()))) << std::endl;
+                std::cout << hit->first << "," << get_point(basel->Dest()) << "," << get_point(rcand->Org()) << "," << get_point(rcand->Dest()) << std::endl;
 
                 // The next cross edge is to be connected to either lcand.Dest
                 // or rcand.Dest If both are valid, then choose the appropriate
                 // one using the in_circle test.
-                if (!right_of(d.first, basel) ||
+                if (!right_of(hit->first, basel) ||
                     (right_of(rcand->Dest(), basel) &&
                      in_circle(
-                             d.first,
+                             hit->first,
                              get_point(basel->Dest()),
                              get_point(rcand->Org()),
                              get_point(rcand->Dest())))) {
@@ -354,7 +381,7 @@ void Delaunay::merge_hull(Hull& h, const edge_type& rdi, edge_type& rdo)
                 }
                 else {
                         // Add cross edge basel from basel.Org to lcand.Dest
-                        edge_type lcand = extend_edge(basel, d.first);
+                        edge_type lcand = extend_edge(basel, hit->first);
                         std::cout << "lcand = " << get_point(lcand->Org()) << "," << get_point(lcand->Dest()) << std::endl;
                         std::cout << "basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         basel = connect_edges(basel->Sym(), lcand->Sym());
@@ -449,39 +476,14 @@ void Delaunay::merge_proc(unsigned int neighbor, Direction dir, edge_type& eo, e
         for (auto& p : hull) std::cout << p << " ";
         std::cout << std::endl;
 
-                // while (true) {
-                //         if (left_of(rdi->Org(), ldi)) ldi = ldi->Lnext();
-                //         else if (right_of(ldi->Org(), rdi)) rdi = rdi->Rprev();
-                //         else break;
-                // }
-
         Hull h(hull);
         if (dir == Direction::Right) {
-                // std::cout << "going in " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
-                // for (Hull::reverse_iterator it=h.rbegin(); it!=h.rend(); ++it) {
-                //         while (left_of(it->first, ei)) ei = ei->Lnext();
-                // }
-                // while (left_of(h.org(), ei)) ei = ei->Lnext();
-
                 std::cout << "going in " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
-                merge_hull(eo, ei, h);
+                merge_hull(comm, neighbor, eo, ei, h);
         }
         else if (dir == Direction::Left) {
-                // std::cout << "going in " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
-                // std::cout << "hull " << h.org() << std::endl;
-                // if (right_of(h.org(), ei)) throw std::runtime_error("Need to implement");
-                // else {
-                //         std::cout << static_cast<int>(left_of(h.org(), ei)) << std::endl;
-                //         std::cout << static_cast<int>(right_of(h.org(), ei)) << std::endl;
-                // for (Hull::reverse_iterator it=h.rbegin(); it!=h.rend(); ++it) {
-                //         while (right_of(it->first, ei)) ei = ei->Rprev();
-                // }
-                // while (right_of(h.org(), ei)) ei = ei->Rprev();
-                // ei = ei->Sym();
-                        // }
-
                 std::cout << "going in " << get_point(ei->Org()) << "," << get_point(ei->Dest()) << std::endl;
-                merge_hull(h, ei, eo);
+                merge_hull(comm, neighbor, h, ei, eo);
         }
 }
 
