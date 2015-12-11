@@ -89,7 +89,7 @@ public:
 
 void sort_point2d_list(unsigned int, std::list<Point2d>&);
 
-void push_back_point2d(std::vector<real>& v, const Point2d& p);
+void push_back_point2d(std::vector<real>&, const Point2d&);
 
 real tri_area(const Point2d&, const Point2d&, const Point2d&);
 
