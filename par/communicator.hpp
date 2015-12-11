@@ -141,6 +141,18 @@ public:
         }
 
         template<typename T>
+        void send(const T* data, int dest, int count = 1, int tag = 0) const {
+                MPI_Send(data, count, mpi_datatype<T>::type, dest, tag, comm);
+        }
+
+        template<typename T>
+        status recv(T* data, int source, int count = 1, int tag = 0) const {
+                status s;
+                MPI_Recv(data, count, mpi_datatype<T>::type, source, tag, comm, reinterpret_cast<MPI_Status *>(&s));
+                return s;
+        }
+
+        template<typename T>
         request isend(const T* data, int dest, int count = 1, int tag = 0) const {
                 MPI_Request req;
                 MPI_Isend(data, count, mpi_datatype<T>::type, dest, tag, comm, &req);
