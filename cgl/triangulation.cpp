@@ -272,6 +272,10 @@ void Delaunay::merge_hull(edge_type& ldo, const edge_type& ldi, Hull& h)
                         basel = connect_edges(rcand, basel->Sym());
                         std::cout << "new basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         ++hit;
+#ifndef NDEBUG
+                        if (hit == h.end())
+                                throw std::runtime_error("Prematurely hit end if hull");
+#endif
                 }
                 else {
                         // Add cross edge basel from basel.Org to lcand.Dest
@@ -295,8 +299,6 @@ void Delaunay::merge_hull(Hull& h, const edge_type& rdi, edge_type& rdo)
 
         // Keep this here for old times' sake
         if (rdi->Org() == rdo->Org()) rdo = basel;
-
-        edge_type lcand_former = basel;
 
         // This is the merge loop
         while (true) {
@@ -352,13 +354,16 @@ void Delaunay::merge_hull(Hull& h, const edge_type& rdi, edge_type& rdo)
                 }
                 else {
                         // Add cross edge basel from basel.Org to lcand.Dest
-                        edge_type lcand = extend_edge(lcand_former, d.first);
+                        edge_type lcand = extend_edge(basel, d.first);
                         std::cout << "lcand = " << get_point(lcand->Org()) << "," << get_point(lcand->Dest()) << std::endl;
                         std::cout << "basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         basel = connect_edges(basel->Sym(), lcand->Sym());
                         std::cout << "new basel = " << get_point(basel->Org()) << "," << get_point(basel->Dest()) << std::endl;
                         ++hit;
-                        lcand_former = lcand;
+#ifndef NDEBUG
+                        if (hit == h.end())
+                                throw std::runtime_error("Prematurely hit end if hull");
+#endif
                 }
         } // Merge loop
 }
