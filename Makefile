@@ -20,6 +20,11 @@ do_delaunay: do_delaunay.o $(cgl_base) $(par_base)
 	$(MPICXX) $^ -o $@ $(LDFLAGS)
 -include do_delaunay.d
 
+progs += generate_test
+generate_test: generate_test.o
+	$(MPICXX) $^ -o $@ $(LDFLAGS)
+-include generate_test.d
+
 # Tests
 tests += geom2d_test
 geom2d_test: cgl/geom2d_test.o cgl/geom2d.o
