@@ -260,6 +260,27 @@ void generate_line(const std::string& fname, unsigned int narg, char *arg[])
         fst.close();
 }
 
+void generate_circle(const std::string& fname, unsigned int narg, char *arg[])
+{
+        if (narg != 1) throw std::runtime_error("USAGE: np");
+
+        unsigned int np;
+
+        { std::stringstream ss(arg[0]); ss >> np; }
+
+        std::ofstream fst(fname, std::ios::out);
+        fst << np << " " << "0" << std::endl;
+
+        const double dalpha = 2 * pi / np;
+        for (unsigned int i=0; i<np; i++) {
+                const double x = cos(i * dalpha);
+                const double y = sin(i * dalpha);
+                fst << x << " " << y << std::endl;
+        }
+
+        fst.close();
+}
+
 int main(int argc, char *argv[]) {
         if (argc < 3)
                 throw std::runtime_error("USAGE: ./generate_test filename distribution (other options)");
@@ -273,6 +294,7 @@ int main(int argc, char *argv[]) {
         else if (s == "uniform") generate_uniform(fname, narg, argv + offset);
         else if (s == "gaussian") generate_gaussian(fname, narg, argv + offset);
         else if (s == "line") generate_line(fname, narg, argv + offset);
+        else if (s == "circle") generate_circle(fname, narg, argv + offset);
         else
                 throw std::runtime_error("Unknown distribution");
 
