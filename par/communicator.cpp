@@ -60,7 +60,7 @@ int communicator::rank() const {
 }
 
 void communicator::abort(const std::string &msg, int err) const {
-        std::cerr << msg << std::endl;
+        std::cerr << "rank = " << rank() << ": " << msg << std::endl;
         MPI_Abort(comm, err);
 }
 

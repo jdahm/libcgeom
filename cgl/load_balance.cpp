@@ -593,7 +593,7 @@ static void lb_s2a21d(unsigned int dimen, list_type& pl)
         const list_type::size_type glob_num_point =
                 std::accumulate(lbd.size.begin(), lbd.size.end(), 0);
 
-        if (glob_num_point < 2 * num_proc) throw std::runtime_error("Try more points");
+        if (glob_num_point < 2 * num_proc) comm.abort("Try more points", 1);
 
         // First: sort list
         sort_point2d_list(dimen, pl);
