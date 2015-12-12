@@ -239,6 +239,9 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
         if (ldi->Org() == ldo->Org()) ldo = basel->Sym();
 
         while (true) {
+#ifndef NDEBUG
+                if (hit == h.end()) comm.abort("Prematurely hit end of hull", 1);
+#endif
                 edge_type lcand = basel->Sym()->Onext();
                 if (right_of(lcand->Dest(), basel))
                         while (in_circle(get_point(basel->Dest()),
@@ -252,8 +255,6 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                                 push_back_point2d(trans, get_point(lcand->Dprev()->Org()));
                                 push_back_point2d(trans, get_point(lcand->Dnext()->Dnext()->Org()));
                                 comm.send(trans.data(), neighbor, 2 * point_type::dim);
-                                // for (auto& a : trans) std::cout << a << " ";
-                                // std::cout << std::endl;
                                 // throw std::runtime_error("Need to transfer here");
                         }
 
@@ -266,8 +267,6 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                                          hit->second)) {
                                 std::vector<real> trans(4);
                                 comm.recv(trans.data(), neighbor, 2 * point_type::dim);
-                                // for (auto& a : trans) std::cout << a << " ";
-                                // std::cout << std::endl;
                                 hit = h.swap(hit, trans);
                                 // throw std::runtime_error("Need to receive here");
                         }
@@ -291,9 +290,6 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                         edge_type rcand = extend_edge(basel->Sym(), hit->first);
                         basel = connect_edges(rcand, basel->Sym());
                         ++hit;
-#ifndef NDEBUG
-                        if (hit == h.end()) comm.abort("Prematurely hit end of hull", 1);
-#endif
                 }
                 else {
                         // Add cross edge basel from basel.Org to lcand.Dest
@@ -315,6 +311,9 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
 
         // This is the merge loop
         while (true) {
+#ifndef NDEBUG
+                if (hit == h.end()) comm.abort("Prematurely hit end of hull", 1);
+#endif
                 // Locate the first L point (lcand.Dest) to be encountered by
                 // the rising bubble, and delete L edges out of basel.Dest that
                 // fail the circle test.
@@ -325,10 +324,7 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                                          hit->second)) {
                                 std::vector<real> trans(4);
                                 comm.recv(trans.data(), neighbor, 4);
-                                // for (auto& a : trans) std::cout << a << " ";
-                                // std::cout << std::endl;
                                 hit = h.swap(hit, trans);
-                                // throw std::runtime_error("Need to receive here");
                         }
 
                 // Symmetrically, locate the first R point to be hit, and delete
@@ -346,9 +342,6 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                                 push_back_point2d(trans, get_point(rcand->Dnext()->Org()));
                                 push_back_point2d(trans, get_point(rcand->Dprev()->Dprev()->Org()));
                                 comm.send(trans.data(), neighbor, 4);
-                                // for (auto& a : trans) std::cout << a << " ";
-                                // std::cout << std::endl;
-                                // throw std::runtime_error("Need to transfer here");
                         }
                 }
 
@@ -375,9 +368,6 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                         edge_type lcand = extend_edge(basel, hit->first);
                         basel = connect_edges(basel->Sym(), lcand->Sym());
                         ++hit;
-#ifndef NDEBUG
-                        if (hit == h.end()) comm.abort("Prematurely hit end of hull", 1);
-#endif
                 }
         } // Merge loop
 }

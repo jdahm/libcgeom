@@ -274,6 +274,8 @@ bool Subdivision::left_of(size_type i, const edge_type& e) const
 
 Subdivision Subdivision::extract_entire_hull(edge_type e, const point_type& pt) const
 {
+        // NOT USED AT THE MOMENT
+
         // e must be oriented ccw around the convex hull
         Subdivision hull;
 
@@ -305,8 +307,6 @@ Subdivision Subdivision::extract_entire_hull(edge_type e, const point_type& pt) 
                 }
         } while (right_of(pt, e));
 
-        hull.write_txt("hull");
-
         return hull;
 }
 
@@ -317,6 +317,7 @@ static bool correct_face(const Subdivision::point_type& org,
         // is facing right. These turn out to be the same condition and the one
         // needed.
         Subdivision::point_type t = dest - org;
+        // return t[1] > real_eps;
         return t[1] > 0;
 }
 
@@ -342,11 +343,7 @@ std::vector<real> Subdivision::extract_left_hull(edge_type& e) const
                 e = e->Lnext();
                 push_back_point2d(h, get_point(e->Dest()));
                 push_back_point2d(h, get_point(e->Oprev()->Dest()));
-        } while (correct_face(get_point(e->Org()), get_point(e->Dest())));
-
-        // std::cout << "Hull: ";
-        // for (auto& a : h) std::cout << a << " ";
-        // std::cout << std::endl;
+        } while (e->Dest() != estart->Org());
 
         // Reset edge
         e = estart;
@@ -369,21 +366,17 @@ std::vector<real> Subdivision::extract_right_hull(edge_type& e) const
                         e = e->Rprev();
         }
 
-        const edge_type estart = e->Rprev();
+        const edge_type estart = e->Sym();
         push_back_point2d(h, get_point(e->Dest()));
 
         do {
                 e = e->Rprev();
                 push_back_point2d(h, get_point(e->Dest()));
                 push_back_point2d(h, get_point(e->Onext()->Dest()));
-        } while (correct_face(get_point(e->Org()), get_point(e->Dest())));
-
-        // std::cout << "Hull: ";
-        // for (auto& a : h) std::cout << a << " ";
-        // std::cout << std::endl;
+        } while (e->Dest() != estart->Org());
 
         // Reset edge
-        e = estart->Rnext()->Sym();
+        e = estart;
 
         return h;
 }
