@@ -14,40 +14,21 @@ protected:
         MPI_Request req;
 
 public:
-        request() : req(MPI_REQUEST_NULL) { }
+        request();
 
-        request(MPI_Request req) : req(req) { }
+        request(MPI_Request req);
 
-        request(const request& other) : req(other.req) { }
+        request(const request& other);
 
-        void cancel() {
-                MPI_Cancel(&req);
-        }
+        void cancel();
 
-        std::pair<bool, status> test() {
-                int result; 
-                status s;
-                MPI_Test(&req, &result, reinterpret_cast<MPI_Status *>(&s));
-                return std::make_pair(static_cast<bool>(result), s);
-        }
+        std::pair<bool, status> test();
 
-        status wait() {
-                status s;
-                MPI_Wait(&req, reinterpret_cast<MPI_Status *>(&s));
-                return s;
-        }
+        status wait();
 
-        std::pair<bool, status> get_status() {
-                int result; 
-                status s;
-                MPI_Request_get_status(req, &result, reinterpret_cast<MPI_Status *>(&s));
-                return std::make_pair(static_cast<bool>(result), s);
-        }
+        std::pair<bool, status> get_status();
 
-        ~request() {
-                if (req!=MPI_REQUEST_NULL)
-                        MPI_Request_free(&req);
-        }
+        ~request();
 };
 
 } // namespace par

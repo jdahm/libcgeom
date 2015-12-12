@@ -10,9 +10,14 @@ tests =
 
 # Base source
 cgl_base=cgl/geom2d.o cgl/quad_edge.o cgl/point_set.o cgl/subdivision.o cgl/triangulation.o cgl/load_balance.o
+ifdef USE_ZOLTAN
+cgl_base += cgl/load_balance_zoltan.o
+else
+cgl_base += cgl/load_balance_nozoltan.o
+endif
 -include $(cgl_base:.o=.d)
 
-par_base=par/communicator.o par/environment.o par/status.o
+par_base=par/communicator.o par/environment.o par/status.o par/request.o
 -include $(par_base:.o=.d)
 
 progs += do_delaunay

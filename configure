@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+cf=config.mk
+echo_cf() { echo "$1 = $2" >> $cf; }
+
+usage() {
+    echo " libcgeom configuration script"
+    echo " USAGE: $0 [options]"
+    echo " Available options:"
+    echo "   -fast       : disable debugging mode and turn on compiler optimizations"
+}
+
+fast=false
+zoltan_home="$ZOLTAN_HOME"
+
+while [[ $1 ]]; do
+    case $1 in
+        -fast)
+            fast=true; shift;;
+        -zoltan)
+            zoltan_home=$2; shift 2;;
+        *)
+            usage; exit 1;;
+    esac
+done
+
+mpicxx=${MPICXX:-mpic++}
+cxxflags="$CXXFLAGS -std=c++11 -Wall -Wextra"
+cppflags="$CPPFLAGS"
+ldflags="$LDFLAGS"
+
+if [ $fast = "true" ]; then
+    cxxflags+=" -O3 -march=native -DNDEBUG"
+else
+    cxxflags+=" -g -O1"
+fi
+
+if [ -n "$zoltan_home" ]; then
+    cppflags+=" -I${zoltan_home}/include"
+    ldflags+=" -L${zoltan_home}/lib -lzoltan -lm"
+fi
+
+rm -f $cf
+echo_cf MPICXX "$mpicxx"
+echo_cf CXXFLAGS "$cxxflags"
+echo_cf CPPFLAGS "$cppflags"
+echo_cf LDFLAGS "$ldflags"
+if [ -n "$zoltan_home" ]; then
+    echo_cf USE_ZOLTAN 1
+fi

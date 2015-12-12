@@ -7,7 +7,9 @@ namespace par
 
 request::request() : req(MPI_REQUEST_NULL) { }
 
-request::request(const T &other) : req(other.req) { }
+request::request(const request &other) : req(other.req) { }
+
+request::request(MPI_Request req) : req(req) { }
 
 void request::cancel()
 {

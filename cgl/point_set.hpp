@@ -6,7 +6,6 @@
 #include <sstream>
 #include <fstream>
 #include <string>
-#include <zoltan.h>
 
 #include "cgl/geom2d.hpp"
 #include "cgl/load_balance.hpp"

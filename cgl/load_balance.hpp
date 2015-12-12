@@ -10,7 +10,6 @@ namespace cgl
 {
 
 enum class LBMethod {S2A2, RCB};
-
 enum class PSTopology {Unary, Binary, Zoltan};
 
 void balance_set(PSTopology, LBMethod, unsigned int, std::list<Point2d>&);

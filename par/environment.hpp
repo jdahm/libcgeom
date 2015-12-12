@@ -4,7 +4,6 @@
 // Based on mpl bindings: https://github.com/rabauke/mpl
 
 #include <mpi.h>
-#include <zoltan.h>
 #include <string>
 #include <utility>
 
