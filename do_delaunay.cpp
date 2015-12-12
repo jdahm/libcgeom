@@ -18,46 +18,41 @@ typedef std::tuple<PointList::size_type, PointList::size_type> PointConnect;
 typedef std::list<PointConnect> PointConnectList;
 
 struct ProgramArgs {
-        enum class InitType { File, Random };
-        enum class SaveType { Txt, Vtu };
-        InitType init;
-        // Could be a union, but this deletes the default constructor
-        unsigned int nPoints;
-        std::string inFileName;
+        enum class SaveType { None, Txt, Vtu };
+        std::string infile;
         SaveType save;
-        std::string outFilePrefix;
+        std::string outfile;
 };
 
 ProgramArgs parse_args(int argc, char *argv[]) {
-        static const std::string usage("USAGE: DoDelaunay [-f | -n] arg [-t | -v] out");
+        static const std::string usage("USAGE: DoDelaunay in_file ([-t | -v] out)");
 
         ProgramArgs args;
 
         const par::communicator& comm_world = par::comm_world();
 
         // Root proc parses the arguments
-        if (argc != 5) comm_world.abort(usage, 1);
+        if (argc < 2) comm_world.abort(usage, 1);
 
-        const std::string isw(argv[1]);
-        std::stringstream iss(argv[2]);
-        if (isw == "-f") {
-                args.init = ProgramArgs::InitType::File;
-                iss >> args.inFileName;
-        }
-        else if (isw == "-n") {
-                args.init = ProgramArgs::InitType::Random;
-                iss >> args.nPoints;
-        }
-        else {
-                comm_world.abort("Command line parsing error. " + usage, 1);
+        {
+                std::stringstream ss(argv[1]);
+                ss >> args.infile;
         }
 
-        const std::string osw(argv[3]);
-        if (osw == "-t") args.save = ProgramArgs::SaveType::Txt;
-        else if (osw == "-v") args.save = ProgramArgs::SaveType::Vtu;
+        args.save = ProgramArgs::SaveType::None;
+        if (argc > 2) {
+                const std::string osw(argv[2]);
+                if (osw == "-t") args.save = ProgramArgs::SaveType::Txt;
+                else if (osw == "-v") args.save = ProgramArgs::SaveType::Vtu;
+        }
 
         // Output file name
-        args.outFilePrefix = argv[4];
+        {
+                std::stringstream ss(argv[3]);
+                ss >> args.outfile;
+        }
+
+        std::cout << args.infile << " " << args.outfile << std::endl;
 
         return args;
 }
@@ -105,25 +100,6 @@ bool file_exists(const std::string& fileName)
         else return false;
 }
 
-
-PointSet generate_random_pointset(unsigned long int n, unsigned int prec) {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(-prec, prec);
-        std::list<Point2d> point;
-        PointSet ps;
-
-        const par::communicator& comm_world = par::comm_world();
-        // if (comm_world.rank() != 0)
-        for (unsigned long int np = 0; np < n - comm_world.rank(); np++) {
-                        real x = static_cast<real>(dis(gen)) / static_cast<real>(prec);
-                        real y = static_cast<real>(dis(gen)) / static_cast<real>(prec);
-                        ps.add(Point2d(x, y));
-                }
-
-        return ps;
-}
-
 int main(int argc, char *argv[]) {
         const par::communicator& comm_world = par::comm_world();
 
@@ -135,25 +111,21 @@ int main(int argc, char *argv[]) {
         // Root proc parses the arguments
         args = parse_args(argc, argv);
 
-        if (args.init == ProgramArgs::InitType::File) {
-                std::string file(args.inFileName);
+        if (file_exists(args.infile)) {
+                if (comm_world.rank() == 0)
+                        read_txt(args.infile, ps, connect);
+        }
+        else {
                 std::stringstream ss;
                 ss << comm_world.rank();
                 std::string rank;
                 ss >> rank;
-                if (!file_exists(file)) {
-                        file = file + "_" + rank + ".txt";
-                        read_txt(file, ps, connect);
-                }
-                else {
-                        if (comm_world.rank() == 0)
-                                read_txt(file, ps, connect);
-                }
+                std::string file(args.infile);
+                file = file + "_" + rank + ".txt";
+                read_txt(file, ps, connect);
         }
-        else if (args.init == ProgramArgs::InitType::Random)
-                ps = generate_random_pointset(args.nPoints, 1e8);
-        else
-                throw std::runtime_error("Unknown input type");
+
+        std::cout << ps.size() << std::endl;
 
         // Distribute the points so they are evenly distributed among the
         // processors in a line
@@ -161,13 +133,14 @@ int main(int argc, char *argv[]) {
 
         // Delaunay (DC)
         cgl::Delaunay DT(ps);
-        
-        if (args.save == ProgramArgs::SaveType::Txt)
-                DT.write_txt(args.outFilePrefix);
-        // else if (args.save == ProgramArgs::SaveType::Vtu)
-        //         DT.write_vtu(args.outFilePrefix);
-        else {
-                comm_world.abort("Unknown output format", 1);
+
+        if (args.save != ProgramArgs::SaveType::None) {
+                if (args.save == ProgramArgs::SaveType::Txt)
+                        DT.write_txt(args.outfile);
+                // else if (args.save == ProgramArgs::SaveType::Vtu)
+                //         DT.write_vtu(args.outFilePrefix);
+                else
+                        comm_world.abort("Unknown output format", 1);
         }
 
         return 0;
