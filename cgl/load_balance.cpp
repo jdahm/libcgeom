@@ -524,7 +524,7 @@ static void lb_create_bin(const par::communicator& comm, unsigned int dimen,
         }
 }
 
-static real lb_s2a2_calculate_imbalance(LBData& lbd)
+static real lb_calculate_imbalance(LBData& lbd)
 {
         const list_type::size_type num_point =
                 std::accumulate(lbd.size.begin(), lbd.size.end(), 0);
@@ -608,17 +608,18 @@ static void lb_s2a21d(unsigned int dimen, list_type& pl)
 
         // Iterate until enough cuts are placed so the points can be (almost)
         // equally placed onto the processors - or give up
+        real imbalance;
         for (unsigned int i=0; i<3; i++) {
                 lb_create_cut(comm, my_num_cut, dimen, pl, lbd);
                 lb_create_bin(comm, dimen, pl, lbd);
-                real imbalance = lb_s2a2_calculate_imbalance(lbd);
-                std::cout << "Imbalance = " << imbalance << std::endl;
+                imbalance = lb_calculate_imbalance(lbd);
                 my_num_cut = std::min(2 * my_num_cut, num_point - 1);
                 int at_limit = static_cast<int>(my_num_cut == num_point - 1);
                 int all_at_limit;
                 comm.allreduce(&at_limit, &all_at_limit, par::min(), 1);
                 if (imbalance < 0.05 || all_at_limit) break;
         }
+        if (my_rank == 0) std::cout << "Imbalance = " << imbalance << std::endl;
 
         // Migrate the points
         lb_migrate_points(comm, pl, lbd);

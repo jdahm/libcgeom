@@ -52,8 +52,6 @@ ProgramArgs parse_args(int argc, char *argv[]) {
                 ss >> args.outfile;
         }
 
-        std::cout << args.infile << " " << args.outfile << std::endl;
-
         return args;
 }
 
@@ -124,8 +122,6 @@ int main(int argc, char *argv[]) {
                 file = file + "_" + rank + ".txt";
                 read_txt(file, ps, connect);
         }
-
-        std::cout << ps.size() << std::endl;
 
         // Distribute the points so they are evenly distributed among the
         // processors in a line
