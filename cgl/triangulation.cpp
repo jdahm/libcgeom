@@ -71,6 +71,7 @@ Delaunay::Delaunay(PointSet& ps) {
         if (comm.rank() == 0)
                 std::cout << "Sort time = " << send - sstart << std::endl;
 
+        comm.barrier();
         const real sdsstart = par::wtime();
 
         // Delaunay the processor portion
@@ -82,6 +83,7 @@ Delaunay::Delaunay(PointSet& ps) {
         if (comm.rank() == 0)
                 std::cout << "SelfDT time = " << sdsend - sdsstart << std::endl;
 
+        comm.barrier();
         const real ndsstart = par::wtime();
 
         // Create merge stack
