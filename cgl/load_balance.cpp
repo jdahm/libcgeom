@@ -181,12 +181,23 @@ static void lb_create_bin(const par::communicator& comm, unsigned int dimen,
         }
 }
 
-static real lb_calculate_imbalance(LBData& lbd)
+static real lb_s2a2_calculate_imbalance(LBData& lbd)
 {
         const list_type::size_type num_point =
                 std::accumulate(lbd.size.begin(), lbd.size.end(), 0);
 
         const auto minmax_elem = std::minmax_element(lbd.new_size.begin(), lbd.new_size.end());
+        const real imbalance = (*minmax_elem.second - *minmax_elem.first) / static_cast<real>(num_point);
+
+        return imbalance;
+}
+
+static real lb_calculate_imbalance(LBData& lbd)
+{
+        const list_type::size_type num_point =
+                std::accumulate(lbd.size.begin(), lbd.size.end(), 0);
+
+        const auto minmax_elem = std::minmax_element(lbd.size.begin(), lbd.size.end());
         const real imbalance = (*minmax_elem.second - *minmax_elem.first) / static_cast<real>(num_point);
 
         return imbalance;
@@ -266,17 +277,17 @@ static void lb_s2a21d(unsigned int dimen, list_type& pl)
         // Iterate until enough cuts are placed so the points can be (almost)
         // equally placed onto the processors - or give up
         real imbalance;
-        for (unsigned int i=0; i<3; i++) {
+        for (unsigned int i=0; i<5; i++) {
                 lb_create_cut(comm, my_num_cut, dimen, pl, lbd);
                 lb_create_bin(comm, dimen, pl, lbd);
-                imbalance = lb_calculate_imbalance(lbd);
+                imbalance = lb_s2a2_calculate_imbalance(lbd);
                 my_num_cut = std::min(2 * my_num_cut, num_point - 1);
                 int at_limit = static_cast<int>(my_num_cut == num_point - 1);
                 int all_at_limit;
                 comm.allreduce(&at_limit, &all_at_limit, par::min(), 1);
                 if (imbalance < 0.05 || all_at_limit) break;
         }
-        if (my_rank == 0) std::cout << "Imbalance = " << imbalance << std::endl;
+        // if (my_rank == 0) std::cout << "Imbalance = " << imbalance << std::endl;
 
         // Migrate the points
         lb_migrate_points(comm, pl, lbd);
@@ -461,10 +472,14 @@ void balance_set(PSTopology top, LBMethod method, unsigned int dimen, list_type&
         comm.barrier();
         const double end_time = par::wtime();
 
-        if (comm.rank() == 0)
+        LBData lbd(par::comm_world(), pl.size());
+        const real imbalance = lb_calculate_imbalance(lbd);
+        if (comm.rank() == 0) {
+                std::cout << "Imbalance = " << imbalance << std::endl;
                 std::cout << "LB time = "
                           << std::setprecision(6)
                           << (end_time - start_time) << std::endl;
+        }
 }
 
 } // namepsace cgl
