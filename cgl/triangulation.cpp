@@ -433,23 +433,22 @@ void Delaunay::merge_proc(const par::communicator& comm, unsigned int neighbor,
         else comm.abort("Unknown merge direction", 1);
 
         const std::vector<real>::size_type myhullsize = myhull.size();
+
         comm.isend(&myhullsize, neighbor);
 
         std::vector<real>::size_type hullsize;
-        {
-                par::request rr = comm.irecv(&hullsize, neighbor);
-                rr.wait();
-        }
+        par::request rs = comm.irecv(&hullsize, neighbor);
+        rs.wait();
 
         // Next, send the hull
+        par::request rhs = comm.isend(myhull.data(), neighbor, myhullsize);
+
         std::vector<real> hull(hullsize);
-        comm.isend(myhull.data(), neighbor, myhullsize);
-        {
-                par::request rr = comm.irecv(hull.data(), neighbor, hullsize);
-                rr.wait();
-        }
+        par::request rr = comm.irecv(hull.data(), neighbor, hullsize);
+        rr.wait();
 
         Hull h(hull);
+        rhs.wait();
         if (dir == Direction::Right)
                 merge_hull(comm, neighbor, eo, ei, h);
         else if (dir == Direction::Left)
