@@ -197,14 +197,12 @@ void generate_gaussian(const std::string& fname, unsigned int narg, char *arg[])
         std::vector<double> w{1, 0.05, 0};
         std::piecewise_linear_distribution<double> d(b.begin(), b.end(), w.begin());
         // std::normal_distribution<> d(0, sigma);
-        std::cout << "np = " << np << std::endl;
         unsigned int i=0;
         while (i < np - nperim) {
                 const double dist = 2 * d(gen);
                 const double angle = 2 * pi * std::generate_canonical<double, 512>(gen);
                 const double x = xc + dist * std::cos(angle);
                 const double y = yc + dist * std::sin(angle);
-                std::cout << x << " " << y << std::endl;
                 if ((x > xs) && (x < xe) && (y > ys) && (y < ye)) {
                         fst << x << " " << y << std::endl;
                         i++;
