@@ -318,18 +318,18 @@ static void rcb1d_recurse(const par::communicator& comm, unsigned int dimen,
                 comm.allgather(&use, 1, lbd.bin.data(), 1);
         }
 
-        std::cout << "this_offset = " << this_offset << std::endl;
-        std::cout << "ratio = " << ratio << std::endl;
-        std::cout << "cuts: ";
-        for (auto& p : lbd.cut) std::cout << p << " ";
-        std::cout << std::endl;
-        std::cout << "use: ";
-        for (auto& p : lbd.bin) std::cout << p << " ";
-        std::cout << std::endl;
+        // std::cout << "this_offset = " << this_offset << std::endl;
+        // std::cout << "ratio = " << ratio << std::endl;
+        // std::cout << "cuts: ";
+        // for (auto& p : lbd.cut) std::cout << p << " ";
+        // std::cout << std::endl;
+        // std::cout << "use: ";
+        // for (auto& p : lbd.bin) std::cout << p << " ";
+        // std::cout << std::endl;
 
         real midpt = 0.;
-        std::cout << "my_rank = " << my_rank << std::endl;
-        std::cout << "num_proc = " << num_proc << std::endl;
+        // std::cout << "my_rank = " << my_rank << std::endl;
+        // std::cout << "num_proc = " << num_proc << std::endl;
         for (unsigned int i=0; i<num_proc; i++)
                 if (lbd.bin[i] != 0) // include this point
                         midpt += lbd.cut[i] *
@@ -349,13 +349,13 @@ static void rcb1d_recurse(const par::communicator& comm, unsigned int dimen,
                 other.splice(other.begin(), pl, pl.begin(), pit);
                 offset = other.size();
         }
-        std::cout << "pl: ";
-        for (auto& p : pl) std::cout << p << " ";
-        std::cout << std::endl;
-        std::cout << "other: ";
-        for (auto& p : other) std::cout << p << " ";
-        std::cout << std::endl;
-        std::cout << "offset = " << offset << std::endl;
+        // std::cout << "pl: ";
+        // for (auto& p : pl) std::cout << p << " ";
+        // std::cout << std::endl;
+        // std::cout << "other: ";
+        // for (auto& p : other) std::cout << p << " ";
+        // std::cout << std::endl;
+        // std::cout << "offset = " << offset << std::endl;
         lbd.send.resize(other.size() * dim);
         {
                 list_type::iterator it=other.begin();
@@ -367,13 +367,13 @@ static void rcb1d_recurse(const par::communicator& comm, unsigned int dimen,
                         other.erase(it++);
                 }
         }
-        std::cout << "send: ";
-        for (auto& p : lbd.send) std::cout << p << " ";
-        std::cout << std::endl;
+        // std::cout << "send: ";
+        // for (auto& p : lbd.send) std::cout << p << " ";
+        // std::cout << std::endl;
 
-        std::cout << "midpt = " << midpt << std::endl;
-        std::cout << "rank_midpt = " << rank_midpt << std::endl;
-        std::cout << "this_offset = " << this_offset << std::endl;
+        // std::cout << "midpt = " << midpt << std::endl;
+        // std::cout << "rank_midpt = " << rank_midpt << std::endl;
+        // std::cout << "this_offset = " << this_offset << std::endl;
 
         // Pack up points
         lbd.sendcounts.resize(num_proc);
@@ -395,16 +395,16 @@ static void rcb1d_recurse(const par::communicator& comm, unsigned int dimen,
                 }
         }
 
-        std::cout << "sendcounts: ";
-        for (auto& p : lbd.sendcounts) std::cout << p << " ";
-        std::cout << std::endl;
+        // std::cout << "sendcounts: ";
+        // for (auto& p : lbd.sendcounts) std::cout << p << " ";
+        // std::cout << std::endl;
 
         // alltoall recvcounts
         comm.alltoall(lbd.sendcounts.data(), 1, lbd.recvcounts.data(), 1);
 
-        std::cout << "recvcounts: ";
-        for (auto& p : lbd.recvcounts) std::cout << p << " ";
-        std::cout << std::endl;
+        // std::cout << "recvcounts: ";
+        // for (auto& p : lbd.recvcounts) std::cout << p << " ";
+        // std::cout << std::endl;
 
         // Offsets in memory (for alltoallv)
         lbd.sdispls[0] = 0;
@@ -427,10 +427,10 @@ static void rcb1d_recurse(const par::communicator& comm, unsigned int dimen,
         for (unsigned int i=0; i<lbd.recv.size(); i+=dim)
                 pl.emplace_back(point_type(lbd.recv[i], lbd.recv[i+1]));
 
-        std::cout << "points: ";
-        for (auto& p : pl) std::cout << p << " ";
-        std::cout << std::endl;
-        std::cout << "--------------" << std::endl;
+        // std::cout << "points: ";
+        // for (auto& p : pl) std::cout << p << " ";
+        // std::cout << std::endl;
+        // std::cout << "--------------" << std::endl;
 
         par::communicator halfcomm(comm, my_rank < rank_midpt);
         rcb1d_recurse(halfcomm, dimen, pl, lbd);

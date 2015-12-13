@@ -25,7 +25,7 @@ EdgeHashTable::iterator EdgeHashTable::add(const EdgeHashTable::key_type& key,
         id_type i = vkey[0], j = vkey[1];
 #ifndef NDEBUG
         if (!valid_vkey(vkey)) {
-                std::cout << "KEY = " << i << "," << j << std::endl;
+                std::cerr << "KEY = " << i << "," << j << std::endl;
                 throw std::runtime_error("Invalid vkey");
         }
 #endif
