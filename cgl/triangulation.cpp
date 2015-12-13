@@ -240,6 +240,7 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
         // Keep this here for old times' sake
         if (ldi->Org() == ldo->Org()) ldo = basel->Sym();
 
+        std::vector<real> trans(4);
         while (true) {
 #ifndef NDEBUG
                 if (hit == h.end()) comm.abort("Prematurely hit end of hull", 1);
@@ -253,11 +254,13 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                                 edge_type t = lcand->Onext();
                                 remove_edge(lcand);
                                 lcand = t;
-                                std::vector<real> trans;
-                                push_back_point2d(trans, get_point(lcand->Dprev()->Org()));
-                                push_back_point2d(trans, get_point(lcand->Dnext()->Dnext()->Org()));
+                                const point_type& p1 = get_point(lcand->Dprev()->Org());
+                                const point_type& p2 = get_point(lcand->Dnext()->Dnext()->Org());
+                                trans[0] = p1[0];
+                                trans[1] = p1[1];
+                                trans[2] = p2[0];
+                                trans[3] = p2[1];
                                 comm.send(trans.data(), neighbor, 2 * point_type::dim);
-                                // throw std::runtime_error("Need to transfer here");
                         }
 
                 // Symmetrically, locate the first R point to be hit, and delete
@@ -267,10 +270,8 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                                          get_point(basel->Org()),
                                          hit->first,
                                          hit->second)) {
-                                std::vector<real> trans(4);
                                 comm.recv(trans.data(), neighbor, 2 * point_type::dim);
                                 hit = h.swap(hit, trans);
-                                // throw std::runtime_error("Need to receive here");
                         }
 
                 // If both lcand and rcand are invalid, then basel is the upper
@@ -311,6 +312,7 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
         // Keep this here for old times' sake
         if (rdi->Org() == rdo->Org()) rdo = basel;
 
+        std::vector<real> trans(4);
         // This is the merge loop
         while (true) {
 #ifndef NDEBUG
@@ -324,7 +326,6 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                                          get_point(basel->Org()),
                                          hit->first,
                                          hit->second)) {
-                                std::vector<real> trans(4);
                                 comm.recv(trans.data(), neighbor, 4);
                                 hit = h.swap(hit, trans);
                         }
@@ -340,9 +341,12 @@ void Delaunay::merge_hull(const par::communicator& comm, unsigned int neighbor,
                                 edge_type t = rcand->Oprev();
                                 remove_edge(rcand);
                                 rcand = t;
-                                std::vector<real> trans;
-                                push_back_point2d(trans, get_point(rcand->Dnext()->Org()));
-                                push_back_point2d(trans, get_point(rcand->Dprev()->Dprev()->Org()));
+                                const point_type& p1 = get_point(rcand->Dnext()->Org());
+                                const point_type& p2 = get_point(rcand->Dprev()->Dprev()->Org());
+                                trans[0] = p1[0];
+                                trans[1] = p1[1];
+                                trans[2] = p2[0];
+                                trans[3] = p2[1];
                                 comm.send(trans.data(), neighbor, 4);
                         }
                 }
