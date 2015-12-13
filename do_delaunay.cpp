@@ -62,21 +62,20 @@ void read_txt(const std::string& fileName, PointSet& ps,
         std::uniform_int_distribution<> dis(-1e8, 1e8);
 
         // Open the file
-        std::ifstream fst(fileName, std::ios::in);
+        std::ifstream fst(fileName, std::ios::in | std::ios::binary);
+        if (!fst.good()) throw std::runtime_error("Error opening file.");
 
         // Number of points and lines
-        PointList::size_type nPoint;
-        PointConnectList::size_type nLine;
-        fst >> nPoint;
-        fst >> nLine;
+        unsigned int nPoint;
+        unsigned int nLine;
+        fst.read(reinterpret_cast<char*>(&nPoint), sizeof(unsigned int));
+        fst.read(reinterpret_cast<char*>(&nLine), sizeof(unsigned int));
 
         // Read in points
         for (PointList::size_type i = 0; i<nPoint; i++) {
                 real x, y;
-                fst >> x;
-                fst >> y;
-                // x = std::sqrt(x*x + y*y) * std::cos(std::atan(y/x) + angle);
-                // y = std::sqrt(x*x + y*y) * std::sin(std::atan(y/x) + angle);
+                fst.read(reinterpret_cast<char*>(&x), sizeof(double));
+                fst.read(reinterpret_cast<char*>(&y), sizeof(double));
                 ps.add(Point2d(x, y));
         }
 
@@ -126,6 +125,8 @@ int main(int argc, char *argv[]) {
         // Distribute the points so they are evenly distributed among the
         // processors in a line
         ps.distribute(cgl::PSTopology::Unary, cgl::LBMethod::S2A2, 0);
+
+        if (ps.size() < 2) comm_world.abort("Need more points.", 1);
 
         // Delaunay (DC)
         cgl::Delaunay DT(ps);

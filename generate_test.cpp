@@ -22,14 +22,21 @@ void generate_regular(const std::string& fname, unsigned int narg, char *arg[])
 
         if (nx < 2 || ny < 2) throw std::runtime_error("More perimeter points needed");
 
-        std::ofstream fst(fname, std::ios::out);
+        std::ofstream fst(fname, std::ios::out | std::ios::binary);
 
-        const unsigned int np = nx * ny;
-        fst << np + n << " " << "0" << std::endl;
+        unsigned int np = nx * ny;
+        unsigned int tnp = np + n;
+        unsigned int nedge = 0;
+        fst.write(reinterpret_cast<char*>(&tnp), sizeof(unsigned int));
+        fst.write(reinterpret_cast<char*>(&nedge), sizeof(unsigned int));
 
         for (unsigned int i=0; i<nx; i++)
-                for (unsigned int j=0; j<ny; j++)
-                        fst << xs + i*dx << " " << ys + j*dy << std::endl;
+                for (unsigned int j=0; j<ny; j++) {
+                        double x = xs + i*dx;
+                        double y = ys + j*dy;
+                        fst.write(reinterpret_cast<char*>(&x), sizeof(double));
+                        fst.write(reinterpret_cast<char*>(&y), sizeof(double));
+                }
 
         const double xe = xs + (nx - 1) * dx;
         const double ye = ys + (ny - 1) * dy;
@@ -38,9 +45,10 @@ void generate_regular(const std::string& fname, unsigned int narg, char *arg[])
         std::mt19937 gen(rd());
 
         for (unsigned int i=0; i<n; i++) {
-                const double x = xs + (xe - xs) * std::generate_canonical<double, 512>(gen);
-                const double y = ys + (ye - ys) * std::generate_canonical<double, 512>(gen);
-                fst << x << " " << y << std::endl;
+                double x = xs + (xe - xs) * std::generate_canonical<double, 512>(gen);
+                double y = ys + (ye - ys) * std::generate_canonical<double, 512>(gen);
+                fst.write(reinterpret_cast<char*>(&x), sizeof(double));
+                fst.write(reinterpret_cast<char*>(&y), sizeof(double));
         }
 
         fst.close();
@@ -135,21 +143,26 @@ void generate_uniform(const std::string& fname, unsigned int narg, char *arg[])
 
         if (nperim > np) throw std::runtime_error("nperim > np");
 
-        std::ofstream fst(fname, std::ios::out);
+        std::ofstream fst(fname, std::ios::out | std::ios::binary);
 
-        fst << np << " " << "0" << std::endl;
+        unsigned int nedge = 0;
+        fst.write(reinterpret_cast<char*>(&np), sizeof(unsigned int));
+        fst.write(reinterpret_cast<char*>(&nedge), sizeof(unsigned int));
 
         if (use_perim)
-                for (unsigned int i=0; i<perim.size(); i+=2)
-                        fst << perim[i] << " " << perim[i+1] << std::endl;
+                for (unsigned int i=0; i<perim.size(); i+=2) {
+                        fst.write(reinterpret_cast<char*>(&perim[i]), sizeof(double));
+                        fst.write(reinterpret_cast<char*>(&perim[i+1]), sizeof(double));
+                }
 
         std::random_device rd;
         std::mt19937 gen(rd());
 
         for (unsigned int i=0; i<np - nperim; i++) {
-                const double x = xs + (xe - xs) * std::generate_canonical<double, 512>(gen);
-                const double y = ys + (ye - ys) * std::generate_canonical<double, 512>(gen);
-                fst << x << " " << y << std::endl;
+                double x = xs + (xe - xs) * std::generate_canonical<double, 512>(gen);
+                double y = ys + (ye - ys) * std::generate_canonical<double, 512>(gen);
+                fst.write(reinterpret_cast<char*>(&x), sizeof(double));
+                fst.write(reinterpret_cast<char*>(&y), sizeof(double));
         }
 
         fst.close();
@@ -183,12 +196,16 @@ void generate_gaussian(const std::string& fname, unsigned int narg, char *arg[])
 
         if (nperim > np) throw std::runtime_error("nperim > np");
 
-        std::ofstream fst(fname, std::ios::out);
-        fst << np << " " << "0" << std::endl;
+        std::ofstream fst(fname, std::ios::out | std::ios::binary);
+        unsigned int nedge = 0;
+        fst.write(reinterpret_cast<char*>(&np), sizeof(unsigned int));
+        fst.write(reinterpret_cast<char*>(&nedge), sizeof(unsigned int));
 
         if (use_perim)
-                for (unsigned int i=0; i<perim.size(); i+=2)
-                        fst << perim[i] << " " << perim[i+1] << std::endl;
+                for (unsigned int i=0; i<perim.size(); i+=2) {
+                        fst.write(reinterpret_cast<char*>(&perim[i]), sizeof(double));
+                        fst.write(reinterpret_cast<char*>(&perim[i+1]), sizeof(double));
+                }
 
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -201,10 +218,11 @@ void generate_gaussian(const std::string& fname, unsigned int narg, char *arg[])
         while (i < np - nperim) {
                 const double dist = 2 * d(gen);
                 const double angle = 2 * pi * std::generate_canonical<double, 512>(gen);
-                const double x = xc + dist * std::cos(angle);
-                const double y = yc + dist * std::sin(angle);
+                double x = xc + dist * std::cos(angle);
+                double y = yc + dist * std::sin(angle);
                 if ((x > xs) && (x < xe) && (y > ys) && (y < ye)) {
-                        fst << x << " " << y << std::endl;
+                        fst.write(reinterpret_cast<char*>(&x), sizeof(double));
+                        fst.write(reinterpret_cast<char*>(&y), sizeof(double));
                         i++;
                 }
         }
@@ -234,15 +252,19 @@ void generate_line(const std::string& fname, unsigned int narg, char *arg[])
 
         if (nperim > np) throw std::runtime_error("nperim > np");
 
-        std::ofstream fst(fname, std::ios::out);
-        fst << np << " " << "0" << std::endl;
+        std::ofstream fst(fname, std::ios::out | std::ios::binary);
+        unsigned int nedge = 0;
+        fst.write(reinterpret_cast<char*>(&np), sizeof(unsigned int));
+        fst.write(reinterpret_cast<char*>(&nedge), sizeof(unsigned int));
 
         std::random_device rd;
         std::mt19937 gen(rd());
 
         if (use_perim)
-                for (unsigned int i=0; i<perim.size(); i+=2)
-                        fst << perim[i] << " " << perim[i+1] << std::endl;
+                for (unsigned int i=0; i<perim.size(); i+=2) {
+                        fst.write(reinterpret_cast<char*>(&perim[i]), sizeof(double));
+                        fst.write(reinterpret_cast<char*>(&perim[i+1]), sizeof(double));
+                }
 
         std::vector<double> b{0, sigma, 1};
         std::vector<double> w{1, 0.05, 0};
@@ -250,9 +272,10 @@ void generate_line(const std::string& fname, unsigned int narg, char *arg[])
         // std::normal_distribution<> d(0.5, sigma);
         unsigned int i=0;
         while (i < np - nperim) {
-                const double x = (i%2) ? 0.5*(1 + d(gen)) : 0.5*(1 - d(gen));
-                const double y = std::generate_canonical<double, 512>(gen);
-                fst << x << " " << y << std::endl;
+                double x = (i%2) ? 0.5*(1 + d(gen)) : 0.5*(1 - d(gen));
+                double y = std::generate_canonical<double, 512>(gen);
+                fst.write(reinterpret_cast<char*>(&x), sizeof(double));
+                fst.write(reinterpret_cast<char*>(&y), sizeof(double));
                 i++;
         }
 
@@ -267,14 +290,17 @@ void generate_circle(const std::string& fname, unsigned int narg, char *arg[])
 
         { std::stringstream ss(arg[0]); ss >> np; }
 
-        std::ofstream fst(fname, std::ios::out);
-        fst << np << " " << "0" << std::endl;
+        std::ofstream fst(fname, std::ios::out | std::ios::binary);
+        unsigned int nedge = 0;
+        fst.write(reinterpret_cast<char*>(&np), sizeof(unsigned int));
+        fst.write(reinterpret_cast<char*>(&nedge), sizeof(unsigned int));
 
         const double dalpha = 2 * pi / np;
         for (unsigned int i=0; i<np; i++) {
-                const double x = cos(i * dalpha);
-                const double y = sin(i * dalpha);
-                fst << x << " " << y << std::endl;
+                double x = cos(i * dalpha);
+                double y = sin(i * dalpha);
+                fst.write(reinterpret_cast<char*>(&x), sizeof(double));
+                fst.write(reinterpret_cast<char*>(&y), sizeof(double));
         }
 
         fst.close();
