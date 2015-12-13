@@ -2,6 +2,7 @@
 #include <sstream>
 #include <fstream>
 #include <random>
+#include <stdexcept>
 
 constexpr double pi = 3.141592653589793238463;
 

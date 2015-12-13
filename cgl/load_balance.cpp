@@ -337,9 +337,9 @@ static void rcb1d_recurse(const par::communicator& comm, unsigned int dimen,
                                 static_cast<real>(glob_num_point);
 
         list_type other;
-        list_type::const_iterator pit = std::find_if(pl.begin(), pl.end(),
-                                                     [midpt,dimen](const point_type& p)
-                                                     { return p[dimen] >= midpt; });
+        list_type::iterator pit = std::find_if(pl.begin(), pl.end(),
+                                               [midpt,dimen](const point_type& p)
+                                               { return p[dimen] >= midpt; });
         list_type::size_type offset;
         if (my_rank < rank_midpt) {
                 other.splice(other.begin(), pl, pit, pl.end());
